@@ -168,6 +168,9 @@ export function renderDetail(container: HTMLElement, slug: string) {
   const headBlock = el('div', 'detail-head');
   headBlock.append(titleStack, el('p', 'detail-description', study.description));
 
+  const introPanel = el('div', 'detail-intro-panel');
+  introPanel.append(back, headBlock);
+
   const nav = el('nav', 'detail-work-nav');
   const groups = groupWorkByYear(workIndex);
   for (let gi = 0; gi < groups.length; gi++) {
@@ -177,7 +180,7 @@ export function renderDetail(container: HTMLElement, slug: string) {
     }
   }
 
-  aside.append(back, headBlock, nav);
+  aside.append(introPanel, nav);
   grid.append(main, aside);
   container.appendChild(grid);
 

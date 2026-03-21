@@ -299,6 +299,13 @@ body {
 .detail-sidebar {
   position: sticky;
   top: 128px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.detail-intro-panel {
+  min-width: 0;
 }
 
 .detail-back {
@@ -438,9 +445,29 @@ body {
     grid-template-columns: 1fr;
   }
 
+  /* Flatten sidebar so we can reorder: intro → gallery → work nav */
   .detail-sidebar {
     position: static;
+    display: contents;
+  }
+
+  .detail-intro-panel {
+    order: 1;
+    width: 100%;
     max-width: 580px;
+    justify-self: start;
+  }
+
+  .detail-main {
+    order: 2;
+  }
+
+  .detail-work-nav {
+    order: 3;
+    margin-top: 0;
+    width: 100%;
+    max-width: 580px;
+    justify-self: start;
   }
 
   .detail-media-stack {
