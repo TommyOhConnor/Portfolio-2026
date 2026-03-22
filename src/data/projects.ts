@@ -81,6 +81,11 @@ export const caseStudies: Record<string, CaseStudy> = {
         src: `${tnfBase}/Graphs - FIN.png`,
         caption: 'Various Data Visualizations',
       },
+      {
+        src: `${tnfBase}/Mobile - FIN.png`,
+        caption:
+          'The landing page and athlete table adapted for mobile, keeping the full data experience accessible in the field.',
+      },
     ],
   },
 };
