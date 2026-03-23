@@ -166,14 +166,6 @@ a.detail-sidebar-title {
   line-height: var(--leading-body);
 }
 
-.work-sampling-bold {
-  font-weight: 700;
-}
-
-.work-sampling-date {
-  color: var(--color-muted);
-}
-
 .work-table {
   display: flex;
   flex-direction: column;

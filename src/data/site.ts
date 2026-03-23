@@ -4,10 +4,8 @@ export const site = {
   email: 'me@tommy-oconnor.com',
   legacyPortfolioUrl: 'https://tommy-oconnor.com',
   workSamplingNote: {
-    leadBold: 'This is a limited sampling of recent work',
-    mid: ' while I finish my new portfolio ',
-    updated: '- updated 5/21/2026',
-    tail: '. See my older work here: ',
+    beforeLegacyLink:
+      'This is a limited sampling of recent work (updated 5/21/2026). See my older work here: ',
   },
   bioParagraphs: [
     `I design software, and I've been doing it for over 25 years. I'm self-taught, which means I came up through illustration, animation, and branding before "product design" was even a job title. That gave me something I've leaned on ever since: the ability to move between visual craft and technical thinking, with a deep comfort for figuring things out as I go.`,

@@ -96,12 +96,8 @@ export function renderLanding(container: HTMLElement) {
 
   const workSection = el('div', 'landing-work');
   const introLine = el('p', 'work-sampling-intro');
-  const b = el('span', 'work-sampling-bold', site.workSamplingNote.leadBold);
   introLine.append(
-    b,
-    document.createTextNode(site.workSamplingNote.mid),
-    el('span', 'work-sampling-date', site.workSamplingNote.updated),
-    document.createTextNode(site.workSamplingNote.tail),
+    document.createTextNode(site.workSamplingNote.beforeLegacyLink),
     (() => {
       const a = document.createElement('a');
       a.href = site.legacyPortfolioUrl;
