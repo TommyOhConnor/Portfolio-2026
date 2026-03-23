@@ -1,4 +1,5 @@
 import './style.css';
+import { inject } from '@vercel/analytics';
 import { renderLanding } from './render/landing';
 import { renderDetail } from './render/detail';
 import { caseStudies } from './data/projects';
@@ -37,6 +38,8 @@ function render() {
 
   window.scrollTo(0, 0);
 }
+
+inject();
 
 window.addEventListener('hashchange', render);
 render();
