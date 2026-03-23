@@ -14,17 +14,18 @@ export const workIndex: WorkIndexRow[] = [
   {
     year: '2026',
     title: 'Meraki DS Update',
-    category: 'Design system',
+    category: 'Design System',
     client: 'Pfizer',
     clientColumn: 'narrow',
     slug: 'meraki-ds-update',
   },
   {
     year: '',
-    title: 'Post-op bleed monitor',
-    category: 'Mobile product design',
+    title: 'Post-op Internal Bleed Monitor',
+    category: 'Product Design',
     client: 'Hemasense',
     clientColumn: 'wide',
+    slug: 'post-op-bleed-monitor',
   },
   {
     year: '',
@@ -52,6 +53,19 @@ export const workIndex: WorkIndexRow[] = [
   },
 ];
 
+/** Single still in the case-study gallery */
+export type CaseStudyGalleryStill = { src: string; caption: string };
+
+/** Two frames alternating on a timer (detail page only) */
+export type CaseStudyGalleryCycle = {
+  caption: string;
+  cycleFrames: [string, string];
+  /** ms each frame stays visible before switching; default 2000 */
+  cycleIntervalMs?: number;
+};
+
+export type CaseStudyGalleryItem = CaseStudyGalleryStill | CaseStudyGalleryCycle;
+
 export type CaseStudy = {
   slug: string;
   headline: string;
@@ -60,19 +74,48 @@ export type CaseStudy = {
   /** Optional live demo / product link (shown after description on detail page) */
   tryItUrl?: string;
   tryItLabel?: string;
-  gallery: { src: string; caption: string }[];
+  gallery: CaseStudyGalleryItem[];
 };
 
 const tnfBase = '/assets/TNF';
 const hoverBase = '/assets/Hover';
 const cardsBase = '/assets/Cards';
 const merakiBase = '/assets/meraki';
+const hemasenseBase = '/assets/Hemasense';
 
 export const caseStudies: Record<string, CaseStudy> = {
+  'post-op-bleed-monitor': {
+    slug: 'post-op-bleed-monitor',
+    headline: 'Post-op Internal Bleed Monitor - Hemasense',
+    type: 'Product Design',
+    description:
+      "HemaSense is an early bleed detection patch for post-surgical recovery — and this is the tablet interface that talks to it. Designed for clinical environments where information has to land at a glance from varying distances, and where accidental touches to critical functions aren't an option. Currently in clinical trials.",
+    gallery: [
+      {
+        src: `${hemasenseBase}/Base - One Patch.png`,
+        caption:
+          'The base state — vitals monitored, patch connected, nothing demanding attention.',
+      },
+      {
+        caption:
+          'A disconnected patch triggers a staged warning sequence designed to be read instantly from across the room.',
+        cycleFrames: [
+          `${hemasenseBase}/Alarm On - High Severity.png`,
+          `${hemasenseBase}/Alarm Off - High Severity.png`,
+        ],
+        cycleIntervalMs: 2000,
+      },
+      {
+        src: `${hemasenseBase}/Histogram.png`,
+        caption:
+          'Histogram of recent readings — a quick way to see how values cluster and whether anything is drifting out of range.',
+      },
+    ],
+  },
   'meraki-ds-update': {
     slug: 'meraki-ds-update',
     headline: 'Meraki DS Update - Pfizer',
-    type: 'Design system',
+    type: 'Design System',
     description:
       "A design system update with a twist. After refreshing Meraki's 60+ component library, I used Cursor to convert everything into React components and packaged the system as an npm module — making it instantly consumable by AI-native tools like Figma Make and Cursor. Design systems built for how work actually happens now.",
     gallery: [
@@ -109,8 +152,7 @@ export const caseStudies: Record<string, CaseStudy> = {
     gallery: [
       {
         src: `${cardsBase}/Landing Page - FIN.png`,
-        caption:
-          'Landing view of the generator: configure and preview guest key cards for The Motel.',
+        caption: 'Try it out at https://guest-card-generator.vercel.app/',
       },
       {
         src: `${cardsBase}/Cards - FIN.png`,
@@ -129,8 +171,7 @@ export const caseStudies: Record<string, CaseStudy> = {
     gallery: [
       {
         src: `${hoverBase}/Landing Page - FIN.png`,
-        caption:
-          'The playground UI: adjust typography, color, circle size, transition speed, and growth to compare hover treatments side by side.',
+        caption: 'Try it out at https://hover-effect-generator.vercel.app/',
       },
     ],
   },
