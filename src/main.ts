@@ -39,7 +39,11 @@ function render() {
   window.scrollTo(0, 0);
 }
 
-inject();
+// Initialize Vercel Analytics with environment detection
+inject({
+  mode: import.meta.env.DEV ? 'development' : 'production',
+  debug: import.meta.env.DEV,
+});
 
 window.addEventListener('hashchange', render);
 render();
