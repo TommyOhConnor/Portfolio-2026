@@ -103,7 +103,7 @@ export const caseStudies: Record<string, CaseStudy> = {
           `${hemasenseBase}/Alarm On - High Severity.png`,
           `${hemasenseBase}/Alarm Off - High Severity.png`,
         ],
-        cycleIntervalMs: 2000,
+        cycleIntervalMs: 500,
       },
       {
         src: `${hemasenseBase}/Histogram.png`,
