@@ -208,10 +208,7 @@ export function renderDetailMobile(container: HTMLElement, slug: string) {
   }, { passive: true });
 
   // ── Touch swipe for project navigation + pull-to-dismiss ─────
-  // Pull-to-dismiss: when at scrollTop 0 we set touch-action:none on the container
-  // (via scroll listener) BEFORE the touch starts. This is the only reliable way to
-  // get Chrome to yield the gesture to JS — preventDefault in touchmove is ignored
-  // when the browser has already committed to scrolling from a passive touchstart.
+  // Pull-to-dismiss is touch-only here; keep native vertical scrolling intact.
   const SWIPE_THRESHOLD = 72;
   const DISMISS_PULL_THRESHOLD = 100;
   let touchStartX = 0;
@@ -224,13 +221,6 @@ export function renderDetailMobile(container: HTMLElement, slug: string) {
   let wheelPullY = 0;
   let wheelPullResetTimer: number | null = null;
   let dismissed = false;
-
-  const updateTouchAction = () => {
-    // When at the very top, yield touch control to JS so we can catch a pull-down
-    container.style.touchAction = container.scrollTop <= 0 ? 'none' : '';
-  };
-  container.addEventListener('scroll', updateTouchAction, { passive: true });
-  updateTouchAction();
 
   const animateOut = () => {
     if (dismissed) return;
@@ -292,6 +282,7 @@ export function renderDetailMobile(container: HTMLElement, slug: string) {
 
   // Pointer fallback (desktop Chrome / device emulation)
   const onPointerDown = (e: PointerEvent) => {
+    if (e.pointerType !== 'mouse') return;
     if (menuOpen) return;
     if (container.scrollTop > 2) return;
     pointerStartY = e.clientY;
@@ -365,7 +356,6 @@ export function renderDetailMobile(container: HTMLElement, slug: string) {
   const cleanup = () => {
     bottomBar.remove();
     overlay.remove();
-    container.removeEventListener('scroll', updateTouchAction);
     container.removeEventListener('touchstart', onTouchStart);
     container.removeEventListener('touchmove', onTouchMove);
     container.removeEventListener('touchend', onTouchEnd);
