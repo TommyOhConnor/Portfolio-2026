@@ -5,43 +5,55 @@ export type WorkIndexRow = {
   client: string;
   /** Narrow client column (104px in Figma) vs wide (160px) */
   clientColumn: 'narrow' | 'wide';
-  /** In-page case study */
+  /** Which landing section this row belongs to */
+  section: 'ai' | 'product';
+  /** In-page stacked-image case study */
   slug?: string;
+  /** External URL — opens in new tab instead of detail page */
+  externalUrl?: string;
 };
 
-/** Landing list: year + title/category on one line (Figma landing). */
-export const workIndex: WorkIndexRow[] = [
+/** AI Stuffs section rows */
+export const aiWorkIndex: WorkIndexRow[] = [
   {
-    year: '2026',
+    year: '',
     title: 'Meraki DS Update',
-    category: 'Design System',
+    category: 'Design system',
     client: 'Pfizer',
     clientColumn: 'narrow',
+    section: 'ai',
     slug: 'meraki-ds-update',
   },
   {
     year: '',
-    title: 'Post-op Internal Bleed Monitor',
-    category: 'Product Design',
-    client: 'Hemasense',
-    clientColumn: 'wide',
-    slug: 'post-op-bleed-monitor',
-  },
-  {
-    year: '',
     title: 'Motel Key Card Generator',
-    category: 'AI Exploration  ↗',
-    client: 'Self',
+    category: 'AI Exploration',
+    client: 'Fun',
     clientColumn: 'wide',
+    section: 'ai',
     slug: 'motel-key-card-generator',
   },
   {
     year: '',
     title: 'Link Hover Interaction',
-    category: 'AI Exploration  ↗',
-    client: 'Self',
+    category: 'AI Exploration',
+    client: 'Fun',
     clientColumn: 'wide',
+    section: 'ai',
     slug: 'link-hover-interaction',
+  },
+];
+
+/** Product Design section rows */
+export const productWorkIndex: WorkIndexRow[] = [
+  {
+    year: '2025',
+    title: 'Post-op Internal Bleed Monitor',
+    category: 'Healthcare product design',
+    client: 'Hemasense',
+    clientColumn: 'wide',
+    section: 'product',
+    slug: 'post-op-bleed-monitor',
   },
   {
     year: '2025',
@@ -49,12 +61,32 @@ export const workIndex: WorkIndexRow[] = [
     category: 'Product design',
     client: 'The North Face',
     clientColumn: 'wide',
+    section: 'product',
     slug: 'tnf-wear-tester',
+  },
+  {
+    year: '2020–22',
+    title: 'Various brand marks',
+    category: 'Brand identity',
+    client: 'n/a',
+    clientColumn: 'wide',
+    section: 'product',
+    slug: 'brand-marks',
   },
 ];
 
+/** Combined list (for detail page nav, preserves order) */
+export const workIndex: WorkIndexRow[] = [...aiWorkIndex, ...productWorkIndex];
+
 /** Single still in the case-study gallery */
-export type CaseStudyGalleryStill = { src: string; caption: string };
+export type CaseStudyGalleryStill = {
+  src: string;
+  caption: string;
+  /** Override object-fit; defaults to 'cover' */
+  fit?: 'cover' | 'contain';
+  /** Override object-position; defaults to 'top center' */
+  align?: 'left' | 'center' | 'right';
+};
 
 /** Two frames alternating on a timer (detail page only) */
 export type CaseStudyGalleryCycle = {
@@ -64,7 +96,15 @@ export type CaseStudyGalleryCycle = {
   cycleIntervalMs?: number;
 };
 
-export type CaseStudyGalleryItem = CaseStudyGalleryStill | CaseStudyGalleryCycle;
+/** Looping mp4 video */
+export type CaseStudyGalleryVideo = {
+  videoSrc: string;
+  caption: string;
+  fit?: 'cover' | 'contain';
+  align?: 'left' | 'center' | 'right';
+};
+
+export type CaseStudyGalleryItem = CaseStudyGalleryStill | CaseStudyGalleryCycle | CaseStudyGalleryVideo;
 
 export type CaseStudy = {
   slug: string;
@@ -78,6 +118,7 @@ export type CaseStudy = {
 };
 
 const tnfBase = '/assets/TNF';
+const bmBase = '/assets/Brandmarks';
 const hoverBase = '/assets/Hover';
 const cardsBase = '/assets/Cards';
 const merakiBase = '/assets/meraki';
@@ -92,23 +133,31 @@ export const caseStudies: Record<string, CaseStudy> = {
       "HemaSense is an early bleed detection patch for post-surgical recovery — and this is the tablet interface that talks to it. Designed for clinical environments where information has to land at a glance from varying distances, and where accidental touches to critical functions aren't an option. Currently in clinical trials.",
     gallery: [
       {
-        src: `${hemasenseBase}/Base - One Patch.png`,
+        src: `${hemasenseBase}/HS - 1.png`,
         caption:
           'The base state — vitals monitored, patch connected, nothing demanding attention.',
+        fit: 'contain',
+        align: 'left',
       },
       {
+        src: `${hemasenseBase}/HS - 2.png`,
         caption:
           'A disconnected patch triggers a staged warning sequence designed to be read instantly from across the room.',
-        cycleFrames: [
-          `${hemasenseBase}/Alarm On - High Severity.png`,
-          `${hemasenseBase}/Alarm Off - High Severity.png`,
-        ],
-        cycleIntervalMs: 500,
+        fit: 'contain',
+        align: 'right',
       },
       {
-        src: `${hemasenseBase}/Histogram.png`,
+        src: `${hemasenseBase}/HS - 3.png`,
         caption:
           'Histogram of recent readings — a quick way to see how values cluster and whether anything is drifting out of range.',
+        fit: 'contain',
+        align: 'left',
+      },
+      {
+        src: `${hemasenseBase}/HS - 4.png`,
+        caption: '',
+        fit: 'contain',
+        align: 'left',
       },
     ],
   },
@@ -150,14 +199,10 @@ export const caseStudies: Record<string, CaseStudy> = {
     tryItUrl: 'https://guest-card-generator.vercel.app/',
     tryItLabel: 'Try it out',
     gallery: [
-      {
-        src: `${cardsBase}/Landing Page - FIN.png`,
-        caption: 'Try it out at https://guest-card-generator.vercel.app/',
-      },
-      {
-        src: `${cardsBase}/Cards - FIN.png`,
-        caption: 'So many room keys!',
-      },
+      { src: `${cardsBase}/KC - 1.png`, caption: '', fit: 'contain', align: 'left' },
+      { src: `${cardsBase}/KC - 2.png`, caption: '', fit: 'contain', align: 'right' },
+      { videoSrc: `${cardsBase}/KC-3.mp4`, caption: '', fit: 'contain', align: 'left' },
+      { src: `${cardsBase}/KC - 4.png`, caption: '', fit: 'contain', align: 'right' },
     ],
   },
   'link-hover-interaction': {
@@ -169,10 +214,22 @@ export const caseStudies: Record<string, CaseStudy> = {
     tryItUrl: 'https://hover-effect-generator.vercel.app/',
     tryItLabel: 'Try it out',
     gallery: [
-      {
-        src: `${hoverBase}/Landing Page - FIN.png`,
-        caption: 'Try it out at https://hover-effect-generator.vercel.app/',
-      },
+      { src: `${hoverBase}/HOV - 1.png`, caption: '', fit: 'contain', align: 'left' },
+      { videoSrc: `${hoverBase}/HOV - 2.mp4`, caption: '', fit: 'contain', align: 'right' },
+    ],
+  },
+  'brand-marks': {
+    slug: 'brand-marks',
+    headline: 'Various brand marks',
+    type: 'Brand identity',
+    description:
+      'A collection of brand marks created between 2020 and 2022. Each mark started with a problem — a name, a feeling, a market position — and ended somewhere unexpected.',
+    gallery: [
+      { src: `${bmBase}/BM - 1.png`, caption: '', fit: 'contain', align: 'left' },
+      { src: `${bmBase}/BM - 2.png`, caption: '', fit: 'contain', align: 'left' },
+      { src: `${bmBase}/BM - 3.png`, caption: '', fit: 'contain', align: 'left' },
+      { src: `${bmBase}/BM - 4.png`, caption: '', fit: 'contain', align: 'right' },
+      { src: `${bmBase}/BM - 5.png`, caption: '', fit: 'contain', align: 'right' },
     ],
   },
   'tnf-wear-tester': {
@@ -183,38 +240,26 @@ export const caseStudies: Record<string, CaseStudy> = {
       "Designed an internal tool for The North Face's wear tester team to track athlete performance and surface actionable insights from Apple Watch data. Previously reliant on manual surveys and spreadsheets, the new platform streamlined data collection and gave the team a real-time view of how gear performed in the field. The project proved successful enough that leadership began exploring how key features could be adapted for a broader customer loyalty program.",
     gallery: [
       {
-        src: `${tnfBase}/Landing Page - FIN.png`,
+        src: `${tnfBase}/TNF - 1.png`,
         caption:
-          'A dashboard overview surfacing participation numbers, garment tracking, recent activity, and demographic and device breakdowns at a glance.',
+          'Program member growth tracked over time — a key metric for gauging loyalty program adoption and momentum.',
+        fit: 'contain',
+        align: 'left',
       },
       {
-        src: `${tnfBase}/Athletes - FIN.png`,
+        src: `${tnfBase}/TNF - 2.png`,
         caption:
           'A filterable data table giving the wear tester team a detailed view of each athlete and their performance data, with advanced filtering to cut through the noise.',
+        fit: 'contain',
+        align: 'left',
       },
       {
-        src: `${tnfBase}/Graphs - FIN.png`,
-        caption: 'Various Data Visualizations',
-      },
-      {
-        src: `${tnfBase}/Mobile - FIN.png`,
+        src: `${tnfBase}/TNF - 3.png`,
         caption:
-          'The landing page and athlete table adapted for mobile, keeping the full data experience accessible in the field.',
+          'Dual data visualizations — activity by sport and program member growth — surfacing how gear performs across disciplines.',
+        fit: 'contain',
+        align: 'right',
       },
     ],
   },
 };
-
-export function groupWorkByYear(rows: WorkIndexRow[]): { year: string; rows: WorkIndexRow[] }[] {
-  const out: { year: string; rows: WorkIndexRow[] }[] = [];
-  let current: { year: string; rows: WorkIndexRow[] } | null = null;
-  for (const row of rows) {
-    if (row.year) {
-      current = { year: row.year, rows: [row] };
-      out.push(current);
-    } else if (current) {
-      current.rows.push(row);
-    }
-  }
-  return out;
-}

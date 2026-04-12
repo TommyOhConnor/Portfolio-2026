@@ -1,18 +1,25 @@
 export const site = {
   name: 'Tommy O\'Connor',
-  role: 'Senior Product Designer',
+  nameAbbreviation: 'T..... O\'',
+  heroHeadline: 'I\'m a dev-curious product designer with 25+ years of figuring things out.',
   email: 'me@tommy-oconnor.com',
-  legacyPortfolioUrl: 'https://tommy-oconnor.com',
-  workSamplingNote: {
-    beforeLegacyLink:
-      'This is a limited sampling of recent work (updated 5/21/2026). See my older work here: ',
+  xHandle: '@DadBodTrlRnnr',
+  xUrl: 'https://x.com/DadBodTrlRnnr',
+  /** Bio shown in the dark "About" state (MORE expanded) */
+  aboutBio: {
+    paragraphs: [
+      `I design — and I've been doing it, in some form for well over two decades.`,
+      `I'm self-taught, coming up through illustration, motion, and branding before "product design" was even a job title. That path gave me something I've leaned on ever since: the ability to move fluidly between visual craft and technical thinking, and a deep comfort with figuring things out as I go.`,
+      `Most of my recent work has been in enterprise UX and design systems — leading Figma library architecture, contributing to clinical mobile apps, and designing across healthcare, insurance, and AI for companies ranging from early-stage startups to Fortune 500s.`,
+      /** Paragraph 4 has an italic span — rendered specially in landing.ts */
+      null,
+      `The goal at this stage of my career is to bring my experience and scrappiness to face challenging and exciting problems.`,
+    ] as (string | null)[],
+    /** The three parts of the italic-span paragraph */
+    aiParagraph: {
+      before: `But what's got me excited right now is AI — and this feeling isn't new. I taught myself Flash ActionScript back in the day because I wanted to make things that design tools alone couldn't. That was my first taste of `,
+      italic: `design meets code`,
+      after: ` — and I loved it. Tools like Claude Code, Cursor, and AI-augmented workflows feel like I'm reliving those moments, and I can't be more excited.`,
+    },
   },
-  bioParagraphs: [
-    `I design software, and I've been doing it for over 25 years. I'm self-taught, which means I came up through illustration, animation, and branding before "product design" was even a job title. That gave me something I've leaned on ever since: the ability to move between visual craft and technical thinking, with a deep comfort for figuring things out as I go.`,
-    `Most of my work the past 10 years has been strictly in product design; design systems, PRDs, and lots of Sketch and Figma. But what's pulling me forward right now is AI — and this feeling isn't new. I taught myself Flash ActionScript because I wanted to make things that design tools alone couldn't. Cursor, Claude Code, and Figma Make feel like that moment, but bigger.`,
-    `When I'm not exploring magical solutions I'm hanging out with my kids and running long distances in the forest.`,
-  ],
-  closingLineBeforeEmail:
-    "I'm looking for a role where design engineering and AI aren't separate conversations. If that's the work you're doing, I'd love to talk (",
-  closingLineAfterEmail: ').',
 };
