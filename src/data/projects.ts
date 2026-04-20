@@ -17,18 +17,9 @@ export type WorkIndexRow = {
 export const aiWorkIndex: WorkIndexRow[] = [
   {
     year: '',
-    title: 'Meraki DS Update',
-    category: 'Design system',
-    client: 'Pfizer',
-    clientColumn: 'narrow',
-    section: 'ai',
-    slug: 'meraki-ds-update',
-  },
-  {
-    year: '',
     title: 'Motel Key Card Generator',
     category: 'AI Exploration',
-    client: 'Fun',
+    client: 'Self',
     clientColumn: 'wide',
     section: 'ai',
     slug: 'motel-key-card-generator',
@@ -37,7 +28,7 @@ export const aiWorkIndex: WorkIndexRow[] = [
     year: '',
     title: 'Link Hover Interaction',
     category: 'AI Exploration',
-    client: 'Fun',
+    client: 'Self',
     clientColumn: 'wide',
     section: 'ai',
     slug: 'link-hover-interaction',
@@ -46,6 +37,15 @@ export const aiWorkIndex: WorkIndexRow[] = [
 
 /** Product Design section rows */
 export const productWorkIndex: WorkIndexRow[] = [
+  {
+    year: '2026',
+    title: 'Meraki DS Update',
+    category: 'Design system',
+    client: 'Pfizer',
+    clientColumn: 'narrow',
+    section: 'product',
+    slug: 'meraki-ds-update',
+  },
   {
     year: '2025',
     title: 'Internal Bleed Monitor',
@@ -66,12 +66,21 @@ export const productWorkIndex: WorkIndexRow[] = [
   },
   {
     year: '2020–22',
-    title: 'Various brand marks',
+    title: 'Brand Marks',
     category: 'Brand identity',
-    client: 'n/a',
+    client: 'Various',
     clientColumn: 'wide',
     section: 'product',
     slug: 'brand-marks',
+  },
+  {
+    year: '2018',
+    title: 'Startup Incubator',
+    category: 'Brand identity',
+    client: 'Moonshot',
+    clientColumn: 'wide',
+    section: 'product',
+    slug: 'moonshot',
   },
 ];
 
@@ -86,6 +95,8 @@ export type CaseStudyGalleryStill = {
   fit?: 'cover' | 'contain';
   /** Override object-position; defaults to 'top center' */
   align?: 'left' | 'center' | 'right';
+  /** Optional interactive flag label shown at the top of the image */
+  interactiveLabel?: string;
 };
 
 /** Two frames alternating on a timer (detail page only) */
@@ -113,6 +124,8 @@ export type CaseStudyGalleryRive = {
   panelBg?: string;
   /** Optional state machine to drive interactive playback */
   stateMachine?: string;
+  /** Optional interactive flag label shown at the top of the panel */
+  interactiveLabel?: string;
 };
 
 export type CaseStudyGalleryItem =
@@ -135,6 +148,7 @@ export type CaseStudy = {
 const assetsBase = `${import.meta.env.BASE_URL}assets`;
 const tnfBase = `${assetsBase}/TNF`;
 const bmBase = `${assetsBase}/Brandmarks`;
+const msBase = `${assetsBase}/Moonshot`;
 const hoverBase = `${assetsBase}/Hover`;
 const cardsBase = `${assetsBase}/Cards`;
 const merakiBase = `${assetsBase}/meraki`;
@@ -270,6 +284,7 @@ export const caseStudies: Record<string, CaseStudy> = {
         panelHeight: 860,
         panelBg: '#D1471B',
         stateMachine: 'State Machine 1',
+        interactiveLabel: 'You can interact with me',
       },
       {
         src: `${tnfBase}/TNF - 3.png`,
@@ -278,6 +293,20 @@ export const caseStudies: Record<string, CaseStudy> = {
         fit: 'contain',
         align: 'right',
       },
+    ],
+  },
+  'moonshot': {
+    slug: 'moonshot',
+    headline: 'Startup Incubator - Moonshot',
+    type: 'Brand',
+    description:
+      'Brand identity for Moonshot, a startup incubator built around the idea that the right environment unlocks outsized outcomes. The work covers naming, visual identity, and the design language used across their program materials.',
+    gallery: [
+      { src: `${msBase}/MS - 1.png`, caption: '', fit: 'contain', align: 'left' },
+      { src: `${msBase}/MS - 2.png`, caption: '', fit: 'contain', align: 'right' },
+      { src: `${msBase}/MS - 3.png`, caption: '', fit: 'contain', align: 'left' },
+      { src: `${msBase}/MS - 4.png`, caption: '', fit: 'contain', align: 'left' },
+      { src: `${msBase}/MS - 5.png`, caption: '', fit: 'contain', align: 'left' },
     ],
   },
 };

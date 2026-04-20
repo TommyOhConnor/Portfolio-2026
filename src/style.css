@@ -4,9 +4,9 @@
   --color-link: #4979f4;
   --color-rule: #cfd9e6;
   --color-ink: #24282e;
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-display: 'Zalando Sans', 'Inter', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-display: 'Zalando Sans', 'Geist', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', 'Courier New', monospace;
   --text-sm: 14px;
   --leading-tight: 1.25;
   --leading-body: 1.694;
@@ -394,6 +394,30 @@ body {
   /* height and z-index set inline by JS */
 }
 
+.cs-rive-panel {
+  position: relative;
+}
+
+.cs-interactive-flag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid #ffd6c9;
+  border-bottom: 1px solid #ffd6c9;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 400;
+  color: #ffd6c9;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 .cs-img {
   display: block;
   width: 100%;
@@ -403,7 +427,7 @@ body {
 }
 
 .cs-rive-panel {
-  margin: 0 auto;
+  margin: 0;
   padding: 0;
   box-sizing: border-box;
   display: flex;

@@ -1,7 +1,7 @@
 export const site = {
   name: 'Tommy O\'Connor',
   nameAbbreviation: 'T..... O\'',
-  heroHeadline: 'I\'m a dev-curious product designer with 25+ years of figuring things out.',
+  heroHeadline: 'I\'m a technical product designer with 25+ years of figuring things out.',
   email: 'me@tommy-oconnor.com',
   xHandle: '@DadBodTrlRnnr',
   xUrl: 'https://x.com/DadBodTrlRnnr',

@@ -9,6 +9,7 @@ import { Rive, Layout, Fit, Alignment } from '@rive-app/webgl2';
 
 const IMAGE_HEIGHT_STEP = 50;
 const SCROLL_PER_IMAGE = 200;
+const SCROLL_DEADBAND = 30; // px of scroll before next image starts reacting
 const DISMISS_THRESHOLD = 150; // px of upward overscroll to trigger exit
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -71,6 +72,9 @@ export function renderDetail(container: HTMLElement, slug: string) {
       canvas.width = artboardW * dpr;
       canvas.height = artboardH * dpr;
       panel.appendChild(canvas);
+      if (item.interactiveLabel) {
+        panel.appendChild(el('div', 'cs-interactive-flag', item.interactiveLabel));
+      }
       wrapper.appendChild(panel);
 
       const rive = new Rive({
@@ -107,6 +111,12 @@ export function renderDetail(container: HTMLElement, slug: string) {
         if (item.align) img.style.objectPosition = `${item.align} bottom`;
       }
       wrapper.appendChild(img);
+    }
+
+    // Interactive flag for non-Rive items (Rive appends to panel directly)
+    if (!isRive(item)) {
+      const label = (item as { interactiveLabel?: string }).interactiveLabel;
+      if (label) wrapper.appendChild(el('div', 'cs-interactive-flag', label));
     }
 
     container.appendChild(wrapper);
@@ -281,16 +291,21 @@ export function renderDetail(container: HTMLElement, slug: string) {
   const updateImages = () => {
     for (let i = 1; i < imgEls.length; i++) {
       const phaseStart = (i - 1) * SCROLL_PER_IMAGE;
+      const motionStart = phaseStart + SCROLL_DEADBAND;
       const phaseEnd = i * SCROLL_PER_IMAGE;
       imgEls[i].style.transition = 'none';
       if (virtualScroll >= phaseEnd) {
         imgEls[i].style.transform = 'translateY(0)';
-      } else if (virtualScroll > phaseStart) {
-        const progress = (virtualScroll - phaseStart) / SCROLL_PER_IMAGE;
+      } else if (virtualScroll > motionStart) {
+        // Past the deadband — image rises with scroll
+        const progress = (virtualScroll - motionStart) / (SCROLL_PER_IMAGE - SCROLL_DEADBAND);
         imgEls[i].style.transform = `translateY(${(heights[i] - 20) * (1 - progress)}px)`;
         peekImage(i + 1);
+      } else if (virtualScroll > phaseStart && peeked.has(i)) {
+        // Inside deadband — hold at peek position
+        imgEls[i].style.transform = `translateY(${heights[i] - 20}px)`;
       } else if (peeked.has(i)) {
-        // Reverse back to peek position when scrolling back up
+        // Scrolling back up — return to peek
         imgEls[i].style.transform = `translateY(${heights[i] - 20}px)`;
       }
     }
