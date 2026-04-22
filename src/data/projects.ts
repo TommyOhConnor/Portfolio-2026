@@ -57,7 +57,7 @@ export const productWorkIndex: WorkIndexRow[] = [
   },
   {
     year: '2025',
-    title: 'Wear tester dashboard',
+    title: 'Wear Tester Dashboard',
     category: 'Product design',
     client: 'The North Face',
     clientColumn: 'wide',

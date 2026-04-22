@@ -1,5 +1,5 @@
 import { site } from '../data/site';
-import { aiWorkIndex, productWorkIndex, type WorkIndexRow } from '../data/projects';
+import { aiWorkIndex, caseStudies, productWorkIndex, type WorkIndexRow } from '../data/projects';
 import { initNameReveal } from '../rive/name-reveal';
 
 function smoothScrollTo(targetY: number, duration: number, onNearEnd?: () => void): Promise<void> {
@@ -36,6 +36,70 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
+const preloadedCaseStudyAssets = new Map<string, Promise<void>>();
+
+function getCaseStudyAssetUrl(
+  item: (typeof caseStudies)[string]['gallery'][number],
+): string {
+  if ('riveSrc' in item) return item.riveSrc;
+  if ('videoSrc' in item) return item.videoSrc;
+  if ('cycleFrames' in item) return item.cycleFrames[0];
+  return item.src;
+}
+
+function preloadAsset(url: string): Promise<void> {
+  const encodedUrl = encodeURI(url);
+  const existing = preloadedCaseStudyAssets.get(encodedUrl);
+  if (existing) return existing;
+
+  const promise = new Promise<void>((resolve) => {
+    if (encodedUrl.endsWith('.riv')) {
+      // Warm the Rive file in the browser cache.
+      fetch(encodedUrl)
+        .catch(() => undefined)
+        .finally(() => resolve());
+      return;
+    }
+
+    if (encodedUrl.endsWith('.mp4')) {
+      const video = document.createElement('video');
+      video.preload = 'auto';
+      video.src = encodedUrl;
+      if (video.readyState >= 2) {
+        resolve();
+        return;
+      }
+      const done = () => resolve();
+      video.addEventListener('loadeddata', done, { once: true });
+      video.addEventListener('error', done, { once: true });
+      return;
+    }
+
+    const img = new Image();
+    img.src = encodedUrl;
+    if (img.complete) {
+      img.decode().catch(() => undefined).finally(resolve);
+      return;
+    }
+    img.addEventListener('load', () => {
+      img.decode().catch(() => undefined).finally(resolve);
+    }, { once: true });
+    img.addEventListener('error', () => resolve(), { once: true });
+  });
+
+  preloadedCaseStudyAssets.set(encodedUrl, promise);
+  return promise;
+}
+
+function preloadCaseStudyAssets(slug: string): Promise<void> {
+  const study = caseStudies[slug];
+  if (!study) return Promise.resolve();
+  // Warm the first two assets so the first transition stays smooth
+  // even on slower connections.
+  const urls = study.gallery.slice(0, 2).map(getCaseStudyAssetUrl);
+  return Promise.all(urls.map(preloadAsset)).then(() => undefined);
+}
+
 export function renderWorkRow(row: WorkIndexRow, showYear: boolean): HTMLElement {
   const wrap = el('div', 'work-row');
 
@@ -58,9 +122,14 @@ export function renderWorkRow(row: WorkIndexRow, showYear: boolean): HTMLElement
     const a = document.createElement('a');
     a.className = 'work-title-link';
     a.href = `#/work/${row.slug}`;
+    const warmCaseStudy = () => { preloadCaseStudyAssets(row.slug!); };
+    a.addEventListener('mouseenter', warmCaseStudy);
+    a.addEventListener('focus', warmCaseStudy);
+    a.addEventListener('touchstart', warmCaseStudy, { passive: true });
     a.addEventListener('click', (e) => {
       e.preventDefault();
       const slug = row.slug!;
+      warmCaseStudy();
       smoothScrollTo(document.documentElement.scrollHeight, 900, () => {
         location.hash = `#/work/${slug}`;
       });

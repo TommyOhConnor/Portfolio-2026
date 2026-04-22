@@ -46,12 +46,14 @@ export function renderDetail(container: HTMLElement, slug: string) {
     'videoSrc' in item;
   const isRive = (item: CaseStudyGalleryItem): item is CaseStudyGalleryRive =>
     'riveSrc' in item;
+  let firstMediaReady: Promise<void> = Promise.resolve();
 
   const imgEls: HTMLDivElement[] = study.gallery.map((item, i) => {
     const wrapper = el('div', 'cs-img-wrapper') as HTMLDivElement;
     wrapper.style.height = `${heights[i]}px`;
     wrapper.style.zIndex = String(i + 1);
     wrapper.style.transform = `translateY(${heights[i] + 1}px)`;
+    let mediaReady: Promise<void> = Promise.resolve();
 
     if (isRive(item)) {
       const panel = el('div', 'cs-rive-panel') as HTMLDivElement;
@@ -76,6 +78,10 @@ export function renderDetail(container: HTMLElement, slug: string) {
         panel.appendChild(el('div', 'cs-interactive-flag', item.interactiveLabel));
       }
       wrapper.appendChild(panel);
+      let resolveReady: () => void = () => undefined;
+      mediaReady = new Promise<void>((resolve) => {
+        resolveReady = resolve;
+      });
 
       const rive = new Rive({
         src: encodeURI(item.riveSrc),
@@ -87,16 +93,27 @@ export function renderDetail(container: HTMLElement, slug: string) {
         layout: new Layout({ fit: Fit.Contain, alignment: Alignment.Center }),
         onLoad: () => {
           rive.resizeDrawingSurfaceToCanvas();
+          resolveReady();
         },
       });
+      setTimeout(resolveReady, 1200);
     } else if (isVideo(item)) {
       const video = document.createElement('video');
       video.src = encodeURI(item.videoSrc);
       video.className = 'cs-img';
+      video.preload = 'auto';
       video.autoplay = true;
       video.loop = true;
       video.muted = true;
       video.playsInline = true;
+      mediaReady = new Promise<void>((resolve) => {
+        if (video.readyState >= 2) {
+          resolve();
+          return;
+        }
+        video.addEventListener('loadeddata', () => resolve(), { once: true });
+        video.addEventListener('error', () => resolve(), { once: true });
+      });
       if (item.fit) video.style.objectFit = item.fit;
       if (item.align) video.style.objectPosition = `${item.align} bottom`;
       wrapper.appendChild(video);
@@ -106,6 +123,16 @@ export function renderDetail(container: HTMLElement, slug: string) {
       img.src = encodeURI(src);
       img.alt = '';
       img.className = 'cs-img';
+      mediaReady = new Promise<void>((resolve) => {
+        if (img.complete) {
+          img.decode().catch(() => undefined).finally(resolve);
+          return;
+        }
+        img.addEventListener('load', () => {
+          img.decode().catch(() => undefined).finally(resolve);
+        }, { once: true });
+        img.addEventListener('error', () => resolve(), { once: true });
+      });
       if (!('cycleFrames' in item)) {
         if (item.fit) img.style.objectFit = item.fit;
         if (item.align) img.style.objectPosition = `${item.align} bottom`;
@@ -118,6 +145,7 @@ export function renderDetail(container: HTMLElement, slug: string) {
       const label = (item as { interactiveLabel?: string }).interactiveLabel;
       if (label) wrapper.appendChild(el('div', 'cs-interactive-flag', label));
     }
+    if (i === 0) firstMediaReady = mediaReady.catch(() => undefined);
 
     container.appendChild(wrapper);
     return wrapper;
@@ -455,12 +483,17 @@ export function renderDetail(container: HTMLElement, slug: string) {
   } else {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        riseImage(imgEls[0], 0);
-        sidebar.style.transition = 'opacity 0.4s ease 600ms';
-        sidebar.style.opacity = '1';
-        if (imgEls.length > 1) setTimeout(() => peekImage(1), 700);
-        // Seed first caption after entry animation settles
-        scheduleCaption(0);
+        Promise.race([
+          firstMediaReady,
+          new Promise<void>((resolve) => setTimeout(resolve, 1200)),
+        ]).finally(() => {
+          riseImage(imgEls[0], 0);
+          sidebar.style.transition = 'opacity 0.4s ease 600ms';
+          sidebar.style.opacity = '1';
+          if (imgEls.length > 1) setTimeout(() => peekImage(1), 700);
+          // Seed first caption after entry animation settles
+          scheduleCaption(0);
+        });
       });
     });
   }
