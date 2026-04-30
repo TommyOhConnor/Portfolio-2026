@@ -62,6 +62,16 @@ export function renderDetail(container: HTMLElement, slug: string) {
       const panelHeight = item.panelHeight ?? 860;
       panel.style.width = `min(100%, ${panelWidth}px)`;
       panel.style.height = `min(100%, ${panelHeight}px)`;
+      if (item.align === 'right') {
+        panel.style.marginLeft = 'auto';
+        panel.style.marginRight = '0';
+      } else if (item.align === 'center') {
+        panel.style.marginLeft = 'auto';
+        panel.style.marginRight = 'auto';
+      } else {
+        panel.style.marginLeft = '0';
+        panel.style.marginRight = 'auto';
+      }
 
       const canvas = document.createElement('canvas');
       canvas.className = 'cs-rive-canvas';
@@ -87,9 +97,9 @@ export function renderDetail(container: HTMLElement, slug: string) {
         src: encodeURI(item.riveSrc),
         canvas,
         autoplay: true,
-        autoBind: true,
+        autoBind: Boolean(item.stateMachine),
         stateMachines: item.stateMachine ?? undefined,
-        isTouchScrollEnabled: true,
+        isTouchScrollEnabled: Boolean(item.stateMachine),
         layout: new Layout({ fit: Fit.Contain, alignment: Alignment.Center }),
         onLoad: () => {
           rive.resizeDrawingSurfaceToCanvas();

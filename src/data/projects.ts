@@ -14,29 +14,28 @@ export type WorkIndexRow = {
 };
 
 /** AI Stuffs section rows */
-export const aiWorkIndex: WorkIndexRow[] = [
+export const aiWorkIndex: WorkIndexRow[] = [];
+
+/** Product Design section rows */
+export const productWorkIndex: WorkIndexRow[] = [
   {
-    year: '',
+    year: '2026',
     title: 'Motel Key Card Generator',
     category: 'AI Exploration',
     client: 'Self',
     clientColumn: 'wide',
-    section: 'ai',
+    section: 'product',
     slug: 'motel-key-card-generator',
   },
   {
-    year: '',
+    year: '2026',
     title: 'Link Hover Interaction',
     category: 'AI Exploration',
     client: 'Self',
     clientColumn: 'wide',
-    section: 'ai',
+    section: 'product',
     slug: 'link-hover-interaction',
   },
-];
-
-/** Product Design section rows */
-export const productWorkIndex: WorkIndexRow[] = [
   {
     year: '2026',
     title: 'Meraki DS Update',
@@ -122,6 +121,7 @@ export type CaseStudyGalleryRive = {
   panelWidth?: number;
   panelHeight?: number;
   panelBg?: string;
+  align?: 'left' | 'center' | 'right';
   /** Optional state machine to drive interactive playback */
   stateMachine?: string;
   /** Optional interactive flag label shown at the top of the panel */
@@ -280,17 +280,19 @@ export const caseStudies: Record<string, CaseStudy> = {
         riveSrc: `${tnfBase}/tnf_line_graph.riv`,
         caption:
           'A filterable data table giving the wear tester team a detailed view of each athlete and their performance data, with advanced filtering to cut through the noise.',
-        panelWidth: 840,
+        panelWidth: 756,
         panelHeight: 860,
         panelBg: '#D1471B',
         stateMachine: 'State Machine 1',
-        interactiveLabel: 'You can interact with me',
+        interactiveLabel: 'Interact with me',
       },
       {
-        src: `${tnfBase}/TNF - 3.png`,
+        riveSrc: `${tnfBase}/tnf_member_activities.riv`,
         caption:
-          'Dual data visualizations — activity by sport and program member growth — surfacing how gear performs across disciplines.',
-        fit: 'contain',
+          'Breakdown of member activity over the past 30 days across run, hike, walk, lift, ski, paddle, cycle, swim, and other activities.',
+        panelWidth: 756,
+        panelHeight: 860,
+        panelBg: '#F7F9FC',
         align: 'right',
       },
     ],

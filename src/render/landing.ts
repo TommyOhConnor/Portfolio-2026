@@ -1,5 +1,5 @@
 import { site } from '../data/site';
-import { aiWorkIndex, caseStudies, productWorkIndex, type WorkIndexRow } from '../data/projects';
+import { caseStudies, productWorkIndex, type WorkIndexRow } from '../data/projects';
 import { initNameReveal } from '../rive/name-reveal';
 
 function smoothScrollTo(targetY: number, duration: number, onNearEnd?: () => void): Promise<void> {
@@ -283,8 +283,7 @@ export function renderLanding(container: HTMLElement) {
 
   // Work sections
   const workWrap = el('div', 'landing-work');
-  workWrap.appendChild(renderWorkSection('AI Stuffs', aiWorkIndex, false));
-  workWrap.appendChild(renderWorkSection('Design', productWorkIndex, true));
+  workWrap.appendChild(renderWorkSection('Work', productWorkIndex, true));
   inner.appendChild(workWrap);
 
   // About panel
