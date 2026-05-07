@@ -28,17 +28,8 @@ export const productWorkIndex: WorkIndexRow[] = [
     slug: 'motel-key-card-generator',
   },
   {
-    year: '2026',
-    title: 'Link Hover Interaction',
-    category: 'AI Exploration',
-    client: 'Self',
-    clientColumn: 'wide',
-    section: 'product',
-    slug: 'link-hover-interaction',
-  },
-  {
-    year: '2026',
-    title: 'Meraki DS Update',
+    year: '2025',
+    title: 'Meraki',
     category: 'Design system',
     client: 'Pfizer',
     clientColumn: 'narrow',
@@ -48,7 +39,7 @@ export const productWorkIndex: WorkIndexRow[] = [
   {
     year: '2025',
     title: 'Internal Bleed Monitor',
-    category: 'Healthcare product design',
+    category: 'Product design',
     client: 'Hemasense',
     clientColumn: 'wide',
     section: 'product',
@@ -96,6 +87,8 @@ export type CaseStudyGalleryStill = {
   align?: 'left' | 'center' | 'right';
   /** Optional interactive flag label shown at the top of the image */
   interactiveLabel?: string;
+  /** If true, use the full first-image height instead of the stepped-down height */
+  fullHeight?: boolean;
 };
 
 /** Two frames alternating on a timer (detail page only) */
@@ -122,17 +115,32 @@ export type CaseStudyGalleryRive = {
   panelHeight?: number;
   panelBg?: string;
   align?: 'left' | 'center' | 'right';
+  interactiveBadgeSrc?: string;
+  /** Optional artboard name to load from the .riv file */
+  artboard?: string;
   /** Optional state machine to drive interactive playback */
   stateMachine?: string;
   /** Optional interactive flag label shown at the top of the panel */
   interactiveLabel?: string;
 };
 
+/** Inline CSS-animated canvas panel (no external file needed) */
+export type CaseStudyGalleryCanvas = {
+  /** Function that returns the fully-built DOM element */
+  renderFn: () => HTMLElement;
+  caption: string;
+  panelWidth?: number;
+  panelHeight?: number;
+  panelBg?: string;
+  align?: 'left' | 'center' | 'right';
+};
+
 export type CaseStudyGalleryItem =
   | CaseStudyGalleryStill
   | CaseStudyGalleryCycle
   | CaseStudyGalleryVideo
-  | CaseStudyGalleryRive;
+  | CaseStudyGalleryRive
+  | CaseStudyGalleryCanvas;
 
 export type CaseStudy = {
   slug: string;
@@ -145,11 +153,118 @@ export type CaseStudy = {
   gallery: CaseStudyGalleryItem[];
 };
 
+// ── Canvas render functions ────────────────────────────────────────────────
+
+function buildMerakiLoadingGraphs(): HTMLElement {
+  const blue = '#2e29ff';
+  const track = '#f0f0f0';
+
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes mer4LinearSweep {
+      0%   { transform: translateX(0)    scaleX(0);   }
+      30%  { transform: translateX(0%)   scaleX(0.4); }
+      100% { transform: translateX(100%) scaleX(0.8); }
+    }
+    @keyframes mer4SpinLarge { to { transform: rotate(360deg); } }
+    @keyframes mer4DashLarge {
+      0%   { stroke-dasharray:  85,298; stroke-dashoffset:  97; }
+      50%  { stroke-dasharray: 167,217; stroke-dashoffset: -49; }
+      70%  { stroke-dasharray: 333, 51; stroke-dashoffset: -49; }
+      100% { stroke-dasharray:  85,298; stroke-dashoffset: -277; }
+    }
+    @keyframes mer4SpinSmall { to { transform: rotate(360deg); } }
+    @keyframes mer4DashSmall {
+      0%   { stroke-dasharray:  24,83; stroke-dashoffset:  27; }
+      50%  { stroke-dasharray:  47,60; stroke-dashoffset: -14; }
+      70%  { stroke-dasharray:  93,14; stroke-dashoffset: -14; }
+      100% { stroke-dasharray:  24,83; stroke-dashoffset: -77; }
+    }
+    .mer4-ring-large, .mer4-ring-small {
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+  `;
+  document.head.appendChild(style);
+
+  const frame = document.createElement('div');
+  Object.assign(frame.style, {
+    position: 'relative',
+    width: '800px',
+    height: '760px',
+    overflow: 'hidden',
+    flexShrink: '0',
+  });
+
+  // Linear progress bar
+  const barTrack = document.createElement('div');
+  Object.assign(barTrack.style, {
+    position: 'absolute',
+    left: '166px', top: '372px',
+    width: '489px', height: '16px',
+    background: track,
+    borderRadius: '25px',
+    overflow: 'hidden',
+  });
+  const barFill = document.createElement('div');
+  Object.assign(barFill.style, {
+    position: 'absolute',
+    inset: '0',
+    background: blue,
+    transformOrigin: '0% 50%',
+    borderRadius: '20px',
+    animation: 'mer4LinearSweep 1.8s cubic-bezier(0.41,0.01,0.22,0.99) infinite',
+  });
+  barTrack.appendChild(barFill);
+  frame.appendChild(barTrack);
+
+  // Large circular spinner (154×154, left=166 top=488)
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svgLarge = document.createElementNS(svgNS, 'svg');
+  svgLarge.setAttribute('width', '154');
+  svgLarge.setAttribute('height', '154');
+  Object.assign((svgLarge as SVGElement as HTMLElement).style, {
+    position: 'absolute', left: '166px', top: '488px', overflow: 'visible',
+  });
+  const trackLarge = document.createElementNS(svgNS, 'circle');
+  trackLarge.setAttribute('cx', '77'); trackLarge.setAttribute('cy', '77'); trackLarge.setAttribute('r', '61');
+  trackLarge.setAttribute('fill', 'none'); trackLarge.setAttribute('stroke', track); trackLarge.setAttribute('stroke-width', '16');
+  const arcLarge = document.createElementNS(svgNS, 'circle');
+  arcLarge.setAttribute('cx', '77'); arcLarge.setAttribute('cy', '77'); arcLarge.setAttribute('r', '61');
+  arcLarge.setAttribute('fill', 'none'); arcLarge.setAttribute('stroke', blue); arcLarge.setAttribute('stroke-width', '16');
+  arcLarge.setAttribute('stroke-linecap', 'round');
+  arcLarge.classList.add('mer4-ring-large');
+  arcLarge.style.animation = 'mer4SpinLarge 2.4s linear infinite, mer4DashLarge 2.4s cubic-bezier(0.41,0.01,0.22,0.99) infinite';
+  svgLarge.append(trackLarge, arcLarge);
+  frame.appendChild(svgLarge);
+
+  // Small circular spinner (45×45, left=533 top=181)
+  const svgSmall = document.createElementNS(svgNS, 'svg');
+  svgSmall.setAttribute('width', '45');
+  svgSmall.setAttribute('height', '45');
+  Object.assign((svgSmall as SVGElement as HTMLElement).style, {
+    position: 'absolute', left: '533px', top: '181px', overflow: 'visible',
+  });
+  const trackSmall = document.createElementNS(svgNS, 'circle');
+  trackSmall.setAttribute('cx', '22.5'); trackSmall.setAttribute('cy', '22.5'); trackSmall.setAttribute('r', '17');
+  trackSmall.setAttribute('fill', 'none'); trackSmall.setAttribute('stroke', track); trackSmall.setAttribute('stroke-width', '5');
+  const arcSmall = document.createElementNS(svgNS, 'circle');
+  arcSmall.setAttribute('cx', '22.5'); arcSmall.setAttribute('cy', '22.5'); arcSmall.setAttribute('r', '17');
+  arcSmall.setAttribute('fill', 'none'); arcSmall.setAttribute('stroke', blue); arcSmall.setAttribute('stroke-width', '5');
+  arcSmall.setAttribute('stroke-linecap', 'round');
+  arcSmall.classList.add('mer4-ring-small');
+  arcSmall.style.animation = 'mer4SpinSmall 1.5s linear infinite, mer4DashSmall 1.5s cubic-bezier(0.41,0.01,0.22,0.99) infinite';
+  svgSmall.append(trackSmall, arcSmall);
+  frame.appendChild(svgSmall);
+
+  return frame;
+}
+
+// ── Asset base paths ──────────────────────────────────────────────────────
 const assetsBase = `${import.meta.env.BASE_URL}assets`;
 const tnfBase = `${assetsBase}/TNF`;
 const bmBase = `${assetsBase}/Brandmarks`;
 const msBase = `${assetsBase}/Moonshot`;
-const hoverBase = `${assetsBase}/Hover`;
 const cardsBase = `${assetsBase}/Cards`;
 const merakiBase = `${assetsBase}/meraki`;
 const hemasenseBase = `${assetsBase}/Hemasense`;
@@ -177,14 +292,24 @@ export const caseStudies: Record<string, CaseStudy> = {
         align: 'right',
       },
       {
-        src: `${hemasenseBase}/HS - 3.png`,
+        riveSrc: `${hemasenseBase}/hemasense.riv`,
+        artboard: 'Alert',
+        stateMachine: 'State Machine 1',
         caption:
           'Histogram of recent readings — a quick way to see how values cluster and whether anything is drifting out of range.',
-        fit: 'contain',
+        panelWidth: 840,
+        panelHeight: 600,
+        panelBg: '#24282E',
         align: 'left',
       },
       {
         src: `${hemasenseBase}/HS - 4.png`,
+        caption: '',
+        fit: 'contain',
+        align: 'right',
+      },
+      {
+        src: `${hemasenseBase}/HS - 5.png`,
         caption: '',
         fit: 'contain',
         align: 'left',
@@ -199,24 +324,39 @@ export const caseStudies: Record<string, CaseStudy> = {
       "A design system update with a twist. After refreshing Meraki's 60+ component library, I used Cursor to convert everything into React components and packaged the system as an npm module — making it instantly consumable by AI-native tools like Figma Make and Cursor. Design systems built for how work actually happens now.",
     gallery: [
       {
-        src: `${merakiBase}/Cards - FIN.png`,
+        src: `${merakiBase}/MER - 1.png`,
+        fit: 'contain',
+        align: 'left',
         caption:
           'Card components built to flex across layout contexts without losing visual consistency.',
       },
       {
-        src: `${merakiBase}/Form - FIN.png`,
-        caption:
-          'Form elements designed for clarity under pressure — inputs, selects, and states that just work.',
+        src: `${merakiBase}/MER - 2.png`,
+        fit: 'contain',
+        align: 'right',
+        caption: 'Type foundation sheet',
       },
       {
-        src: `${merakiBase}/Storybook 1 - FIN.png`,
-        caption:
-          'The full component library living in Storybook, documented and ready to build with.',
+        src: `${merakiBase}/MER - 3.png`,
+        fit: 'contain',
+        align: 'left',
+        caption: 'Color tokens reference sheet',
       },
       {
-        src: `${merakiBase}/Storybook 2 - FIN.png`,
+        renderFn: buildMerakiLoadingGraphs,
         caption:
-          'Design tokens exposed in Storybook — the single source of truth for color, type, and spacing.',
+          'Loading animations with custom easing',
+        panelWidth: 800,
+        panelHeight: 760,
+        panelBg: '#F8FBFF',
+        align: 'right',
+      },
+      {
+        src: `${merakiBase}/MER - 5.png`,
+        fit: 'contain',
+        align: 'left',
+        fullHeight: true,
+        caption: '',
       },
     ],
   },
@@ -225,27 +365,13 @@ export const caseStudies: Record<string, CaseStudy> = {
     headline: 'Motel Key Card Generator - Self',
     type: 'AI Exploration',
     description:
-      "This one started as a stipple pattern generator — a visual experiment for my portfolio that didn't quite land. Rather than scrap it, I repurposed the tool into a guest card generator for a fictitious hotel called The Motel. Built with Cursor and Claude Code, it's a small example of how AI-assisted builds make pivoting cheap and exploration worth it.",
+      "What if we could design our own Motel Cards? I'd probably have an English Pointer on mine, one that looks like my dog Arlo. I built this little side project with Cursor, Opus 4.6, an LLM API key, and Illustrator. Feel free to make your own cards [here], you can even download the SVG and take it with you.",
     tryItUrl: 'https://guest-card-generator.vercel.app/',
-    tryItLabel: 'Try it out',
     gallery: [
       { src: `${cardsBase}/KC - 1.png`, caption: '', fit: 'contain', align: 'left' },
-      { src: `${cardsBase}/KC - 2.png`, caption: '', fit: 'contain', align: 'right' },
+      { src: `${cardsBase}/KC - 2.png`, caption: 'A few of my favorites so far.', fit: 'contain', align: 'right' },
       { videoSrc: `${cardsBase}/KC-3.mp4`, caption: '', fit: 'contain', align: 'left' },
       { src: `${cardsBase}/KC - 4.png`, caption: '', fit: 'contain', align: 'right' },
-    ],
-  },
-  'link-hover-interaction': {
-    slug: 'link-hover-interaction',
-    headline: 'Link Hover Interaction - Self',
-    type: 'AI Exploration',
-    description:
-      'An AI-assisted experiment exploring how small variables shape the feel of a single interaction. Built with Cursor, this playground lets you tweak font, color, size, and speed in real time — a fast way to feel the difference between a link that whispers and one that snaps.',
-    tryItUrl: 'https://hover-effect-generator.vercel.app/',
-    tryItLabel: 'Try it out',
-    gallery: [
-      { src: `${hoverBase}/HOV - 1.png`, caption: '', fit: 'contain', align: 'left' },
-      { videoSrc: `${hoverBase}/HOV - 2.mp4`, caption: '', fit: 'contain', align: 'right' },
     ],
   },
   'brand-marks': {
@@ -279,12 +405,12 @@ export const caseStudies: Record<string, CaseStudy> = {
       {
         riveSrc: `${tnfBase}/tnf_line_graph.riv`,
         caption:
-          'A filterable data table giving the wear tester team a detailed view of each athlete and their performance data, with advanced filtering to cut through the noise.',
+          'Interactive month by month member volume',
         panelWidth: 756,
         panelHeight: 860,
         panelBg: '#D1471B',
         stateMachine: 'State Machine 1',
-        interactiveLabel: 'Interact with me',
+        interactiveBadgeSrc: `${tnfBase}/Interact.svg`,
       },
       {
         riveSrc: `${tnfBase}/tnf_member_activities.riv`,

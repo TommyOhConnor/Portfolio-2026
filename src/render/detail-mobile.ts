@@ -106,13 +106,16 @@ export function renderDetailMobile(container: HTMLElement, slug: string) {
         src: encodeURI(item.riveSrc),
         canvas,
         autoplay: true,
-        autoBind: true,
-        stateMachines: item.stateMachine ?? undefined,
-        isTouchScrollEnabled: true,
+        artboard: item.artboard ?? undefined,
+        autoBind: Boolean(item.stateMachine),
+        stateMachines: item.stateMachine ? [item.stateMachine] : undefined,
+        isTouchScrollEnabled: Boolean(item.stateMachine),
         layout: new Layout({ fit: Fit.Contain, alignment: Alignment.Center }),
         onLoad: () => {
           rive.resizeDrawingSurfaceToCanvas();
+          rive.play();
         },
+        onLoadError: (e) => console.error('[Rive] load error:', e),
       });
     } else if (isVideo(item)) {
       const video = document.createElement('video');

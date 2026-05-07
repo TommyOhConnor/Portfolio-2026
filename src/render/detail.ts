@@ -2,12 +2,13 @@ import {
   caseStudies,
   workIndex,
   type CaseStudyGalleryItem,
+  type CaseStudyGalleryCanvas,
   type CaseStudyGalleryRive,
   type CaseStudyGalleryVideo,
 } from '../data/projects';
 import { Rive, Layout, Fit, Alignment } from '@rive-app/webgl2';
 
-const IMAGE_HEIGHT_STEP = 50;
+const IMAGE_HEIGHT_STEP = 40;
 const SCROLL_PER_IMAGE = 200;
 const SCROLL_DEADBAND = 30; // px of scroll before next image starts reacting
 const DISMISS_THRESHOLD = 150; // px of upward overscroll to trigger exit
@@ -21,6 +22,27 @@ function el<K extends keyof HTMLElementTagNameMap>(
   if (className) node.className = className;
   if (text !== undefined) node.textContent = text;
   return node;
+}
+
+function renderDescription(study: (typeof caseStudies)[string]): HTMLParagraphElement {
+  const desc = el('p', 'cs-info-desc');
+  const text = study.description;
+  const marker = '[here]';
+  const markerIdx = text.indexOf(marker);
+  if (markerIdx >= 0 && study.tryItUrl) {
+    const before = text.slice(0, markerIdx);
+    const after = text.slice(markerIdx + marker.length);
+    desc.appendChild(document.createTextNode(before));
+    const inlineLink = el('a', 'text-link', 'here') as HTMLAnchorElement;
+    inlineLink.href = study.tryItUrl;
+    inlineLink.target = '_blank';
+    inlineLink.rel = 'noopener noreferrer';
+    desc.appendChild(inlineLink);
+    desc.appendChild(document.createTextNode(after));
+    return desc;
+  }
+  desc.textContent = text;
+  return desc;
 }
 
 export function renderDetail(container: HTMLElement, slug: string) {
@@ -40,12 +62,22 @@ export function renderDetail(container: HTMLElement, slug: string) {
 
   // ── Images ───────────────────────────────────────────────────
   const imageHeightFirst = Math.round(window.innerHeight * 0.8);
-  const heights = study.gallery.map((_, i) => imageHeightFirst - i * IMAGE_HEIGHT_STEP);
+  const heights = study.gallery.map((item, i) => {
+    // Canvas/Rive panels with an explicit panelHeight: use the smaller of
+    // imageHeightFirst and panelHeight so the wrapper never exceeds the panel.
+    if ('panelHeight' in item && item.panelHeight) {
+      return Math.min(imageHeightFirst - i * IMAGE_HEIGHT_STEP, item.panelHeight);
+    }
+    if ('fullHeight' in item && item.fullHeight) return imageHeightFirst;
+    return imageHeightFirst - i * IMAGE_HEIGHT_STEP;
+  });
 
   const isVideo = (item: (typeof study.gallery)[number]): item is CaseStudyGalleryVideo =>
     'videoSrc' in item;
   const isRive = (item: CaseStudyGalleryItem): item is CaseStudyGalleryRive =>
     'riveSrc' in item;
+  const isCanvas = (item: CaseStudyGalleryItem): item is CaseStudyGalleryCanvas =>
+    'renderFn' in item;
   let firstMediaReady: Promise<void> = Promise.resolve();
 
   const imgEls: HTMLDivElement[] = study.gallery.map((item, i) => {
@@ -88,6 +120,14 @@ export function renderDetail(container: HTMLElement, slug: string) {
         panel.appendChild(el('div', 'cs-interactive-flag', item.interactiveLabel));
       }
       wrapper.appendChild(panel);
+      if (item.interactiveBadgeSrc) {
+        const badge = document.createElement('img');
+        badge.src = encodeURI(item.interactiveBadgeSrc);
+        badge.alt = '';
+        badge.setAttribute('aria-hidden', 'true');
+        badge.className = 'cs-interactive-badge';
+        wrapper.appendChild(badge);
+      }
       let resolveReady: () => void = () => undefined;
       mediaReady = new Promise<void>((resolve) => {
         resolveReady = resolve;
@@ -97,16 +137,41 @@ export function renderDetail(container: HTMLElement, slug: string) {
         src: encodeURI(item.riveSrc),
         canvas,
         autoplay: true,
+        artboard: item.artboard ?? undefined,
         autoBind: Boolean(item.stateMachine),
-        stateMachines: item.stateMachine ?? undefined,
+        stateMachines: item.stateMachine ? [item.stateMachine] : undefined,
         isTouchScrollEnabled: Boolean(item.stateMachine),
         layout: new Layout({ fit: Fit.Contain, alignment: Alignment.Center }),
         onLoad: () => {
           rive.resizeDrawingSurfaceToCanvas();
+          rive.play();
           resolveReady();
         },
+        onLoadError: (e) => console.error('[Rive] load error:', e),
       });
       setTimeout(resolveReady, 1200);
+    } else if (isCanvas(item)) {
+      const panel = el('div', 'cs-rive-panel') as HTMLDivElement;
+      panel.style.background = item.panelBg ?? '#ffffff';
+      const panelWidth = item.panelWidth ?? 800;
+      const panelHeight = item.panelHeight ?? 760;
+      panel.style.width = `min(100%, ${panelWidth}px)`;
+      panel.style.height = `min(100%, ${panelHeight}px)`;
+      if (item.align === 'right') {
+        panel.style.marginLeft = 'auto';
+        panel.style.marginRight = '0';
+      } else if (item.align === 'center') {
+        panel.style.marginLeft = 'auto';
+        panel.style.marginRight = 'auto';
+      } else {
+        panel.style.marginLeft = '0';
+        panel.style.marginRight = 'auto';
+      }
+      const content = item.renderFn();
+      content.style.width = '100%';
+      content.style.height = '100%';
+      panel.appendChild(content);
+      wrapper.appendChild(panel);
     } else if (isVideo(item)) {
       const video = document.createElement('video');
       video.src = encodeURI(item.videoSrc);
@@ -187,10 +252,10 @@ export function renderDetail(container: HTMLElement, slug: string) {
     el('p', 'cs-info-type', study.type),
   );
   infoBlock.appendChild(headWrap);
-  infoBlock.appendChild(el('p', 'cs-info-desc', study.description));
-  if (study.tryItUrl) {
+  infoBlock.appendChild(renderDescription(study));
+  if (study.tryItUrl && study.tryItLabel) {
     const tryRow = el('p', 'cs-info-try');
-    const tryLink = el('a', 'text-link', study.tryItLabel ?? 'Try it out') as HTMLAnchorElement;
+    const tryLink = el('a', 'text-link', study.tryItLabel) as HTMLAnchorElement;
     tryLink.href = study.tryItUrl;
     tryLink.target = '_blank';
     tryLink.rel = 'noopener noreferrer';

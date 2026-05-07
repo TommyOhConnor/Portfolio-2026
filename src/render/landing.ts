@@ -109,7 +109,11 @@ export function renderWorkRow(row: WorkIndexRow, showYear: boolean): HTMLElement
     main.appendChild(el('span', 'work-year', row.year || '\u00a0'));
   }
 
-  const titles = el('div', 'work-titles');
+  // Client + title rendered inline as one continuous text block
+  const titleLine = el('p', 'work-title-line');
+  const clientSpan = el('span', 'work-client-inline', row.client + '\u00a0');
+  titleLine.appendChild(clientSpan);
+
   if (row.externalUrl) {
     const a = document.createElement('a');
     a.className = 'work-title-link';
@@ -117,7 +121,7 @@ export function renderWorkRow(row: WorkIndexRow, showYear: boolean): HTMLElement
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
     a.textContent = row.title;
-    titles.appendChild(a);
+    titleLine.appendChild(a);
   } else if (row.slug) {
     const a = document.createElement('a');
     a.className = 'work-title-link';
@@ -135,15 +139,15 @@ export function renderWorkRow(row: WorkIndexRow, showYear: boolean): HTMLElement
       });
     });
     a.textContent = row.title;
-    titles.appendChild(a);
+    titleLine.appendChild(a);
   } else {
-    titles.appendChild(document.createTextNode(row.title));
+    const titleSpan = el('span', 'work-title-link', row.title);
+    titleLine.appendChild(titleSpan);
   }
-  titles.appendChild(el('span', 'work-category', row.category));
-  main.appendChild(titles);
+  main.appendChild(titleLine);
 
-  const client = el('div', `work-client work-client--${row.clientColumn}`, row.client);
-  wrap.append(main, client);
+  const category = el('div', 'work-category-col', row.category);
+  wrap.append(main, category);
   return wrap;
 }
 
