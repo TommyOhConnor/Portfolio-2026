@@ -10,12 +10,13 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 /** [source under assets/, dest under public/assets/] */
 const mappings = [
+  ['Brandmarks', 'Brandmarks'],
   ['Cards', 'Cards'],
   ['Hemasense', 'Hemasense'],
   ['Hover', 'Hover'],
   ['Misc', 'Misc'],
   ['TNF', 'TNF'],
-  ['Meraki', 'meraki'],
+  ['meraki', 'meraki'],
 ];
 
 mkdirSync(path.join(root, 'public', 'assets'), { recursive: true });
