@@ -127,7 +127,7 @@ export function renderDetailMobile(container: HTMLElement, slug: string) {
       video.playsInline = true;
       wrap.appendChild(video);
     } else {
-      const src = 'cycleFrames' in item ? item.cycleFrames[0] : item.src;
+      const src = 'cycleFrames' in item ? item.cycleFrames[0] : ('src' in item ? item.src : '');
       const img = document.createElement('img');
       img.src = encodeURI(src);
       img.alt = '';

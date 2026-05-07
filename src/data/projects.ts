@@ -223,7 +223,7 @@ function buildMerakiLoadingGraphs(): HTMLElement {
   const svgLarge = document.createElementNS(svgNS, 'svg');
   svgLarge.setAttribute('width', '154');
   svgLarge.setAttribute('height', '154');
-  Object.assign((svgLarge as SVGElement as HTMLElement).style, {
+  Object.assign((svgLarge as unknown as HTMLElement).style, {
     position: 'absolute', left: '166px', top: '488px', overflow: 'visible',
   });
   const trackLarge = document.createElementNS(svgNS, 'circle');
@@ -242,7 +242,7 @@ function buildMerakiLoadingGraphs(): HTMLElement {
   const svgSmall = document.createElementNS(svgNS, 'svg');
   svgSmall.setAttribute('width', '45');
   svgSmall.setAttribute('height', '45');
-  Object.assign((svgSmall as SVGElement as HTMLElement).style, {
+  Object.assign((svgSmall as unknown as HTMLElement).style, {
     position: 'absolute', left: '533px', top: '181px', overflow: 'visible',
   });
   const trackSmall = document.createElementNS(svgNS, 'circle');

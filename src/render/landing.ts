@@ -44,6 +44,7 @@ function getCaseStudyAssetUrl(
   if ('riveSrc' in item) return item.riveSrc;
   if ('videoSrc' in item) return item.videoSrc;
   if ('cycleFrames' in item) return item.cycleFrames[0];
+  if ('renderFn' in item) return '';
   return item.src;
 }
 
