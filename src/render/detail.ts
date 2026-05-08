@@ -63,10 +63,13 @@ export function renderDetail(container: HTMLElement, slug: string) {
   // ── Images ───────────────────────────────────────────────────
   const imageHeightFirst = Math.round(window.innerHeight * 0.8);
   const heights = study.gallery.map((item, i) => {
-    // Canvas/Rive panels with an explicit panelHeight: use the smaller of
-    // imageHeightFirst and panelHeight so the wrapper never exceeds the panel.
     if ('panelHeight' in item && item.panelHeight) {
-      return Math.min(imageHeightFirst - i * IMAGE_HEIGHT_STEP, item.panelHeight);
+      if ('tallAsFirstImage' in item && item.tallAsFirstImage) {
+        return imageHeightFirst;
+      }
+      // Step down from the panel's natural cap so the stagger is always visible.
+      const base = Math.min(imageHeightFirst, item.panelHeight);
+      return base - i * IMAGE_HEIGHT_STEP;
     }
     if ('fullHeight' in item && item.fullHeight) return imageHeightFirst;
     return imageHeightFirst - i * IMAGE_HEIGHT_STEP;
@@ -91,9 +94,8 @@ export function renderDetail(container: HTMLElement, slug: string) {
       const panel = el('div', 'cs-rive-panel') as HTMLDivElement;
       panel.style.background = item.panelBg ?? '#D1471B';
       const panelWidth = item.panelWidth ?? 840;
-      const panelHeight = item.panelHeight ?? 860;
       panel.style.width = `min(100%, ${panelWidth}px)`;
-      panel.style.height = `min(100%, ${panelHeight}px)`;
+      panel.style.height = `${heights[i]}px`;
       if (item.align === 'right') {
         panel.style.marginLeft = 'auto';
         panel.style.marginRight = '0';
@@ -154,9 +156,8 @@ export function renderDetail(container: HTMLElement, slug: string) {
       const panel = el('div', 'cs-rive-panel') as HTMLDivElement;
       panel.style.background = item.panelBg ?? '#ffffff';
       const panelWidth = item.panelWidth ?? 800;
-      const panelHeight = item.panelHeight ?? 760;
       panel.style.width = `min(100%, ${panelWidth}px)`;
-      panel.style.height = `min(100%, ${panelHeight}px)`;
+      panel.style.height = `${heights[i]}px`;
       if (item.align === 'right') {
         panel.style.marginLeft = 'auto';
         panel.style.marginRight = '0';
@@ -277,7 +278,7 @@ export function renderDetail(container: HTMLElement, slug: string) {
     // Align sidebar + bg panel to top of first (tallest) image
     const top = window.innerHeight - Math.round(window.innerHeight * 0.8);
     sidebar.style.top = `${top}px`;
-    bgPanel.style.top = `${top - 16}px`;
+    bgPanel.style.top = `${top}px`;
 
     // Hide caption/counter if there isn't enough room to show them cleanly
     requestAnimationFrame(() => {

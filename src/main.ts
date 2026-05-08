@@ -62,6 +62,15 @@ function render() {
       renderDetail(detailEl, route.slug);
     }
 
+    // Scroll background so the 'Works' label sits ~40px from the top
+    requestAnimationFrame(() => {
+      const label = document.querySelector<HTMLElement>('.landing-section-label');
+      if (label) {
+        const { top } = label.getBoundingClientRect();
+        window.scrollBy({ top: top - 40, behavior: 'smooth' });
+      }
+    });
+
     const study = caseStudies[route.slug];
     document.title = study
       ? `${study.headline} — Tommy O'Connor`

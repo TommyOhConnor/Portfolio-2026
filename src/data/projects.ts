@@ -133,6 +133,8 @@ export type CaseStudyGalleryCanvas = {
   panelHeight?: number;
   panelBg?: string;
   align?: 'left' | 'center' | 'right';
+  /** Use the first image stack height so the panel is not stepped down (bottom still fixed to viewport). */
+  tallAsFirstImage?: boolean;
 };
 
 export type CaseStudyGalleryItem =
@@ -350,6 +352,7 @@ export const caseStudies: Record<string, CaseStudy> = {
         panelHeight: 760,
         panelBg: '#F8FBFF',
         align: 'right',
+        tallAsFirstImage: true,
       },
       {
         src: `${merakiBase}/MER - 5.png`,
@@ -409,6 +412,7 @@ export const caseStudies: Record<string, CaseStudy> = {
         panelWidth: 756,
         panelHeight: 860,
         panelBg: '#D1471B',
+        align: 'right',
         stateMachine: 'State Machine 1',
         interactiveBadgeSrc: `${tnfBase}/Interact.svg`,
       },
@@ -419,7 +423,7 @@ export const caseStudies: Record<string, CaseStudy> = {
         panelWidth: 756,
         panelHeight: 860,
         panelBg: '#F7F9FC',
-        align: 'right',
+        align: 'left',
       },
     ],
   },
