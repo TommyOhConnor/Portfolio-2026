@@ -893,21 +893,74 @@ body {
     margin-top: 56px;
   }
 
+  .landing-work-tab {
+    padding: 14px 20px;
+  }
+
+  .landing-work-tab--active {
+    padding: 14px 20px;
+  }
+
+  .landing-work-tab-desc {
+    display: none;
+  }
+
   .landing-work--bites-active {
     max-width: 100%;
   }
 
   .bites-drawer-host {
-    overflow: hidden;
-    height: calc((100vw - 40px) * 880 / 1200);
+    overflow: visible;
+    height: auto;
+    cursor: default;
   }
 
   .bites-drawer {
-    width: 1200px;
-    max-width: none;
-    min-height: 880px;
-    transform: scale(calc((100vw - 40px) / 1200));
-    transform-origin: top left;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    width: 100%;
+    min-height: 0;
+    max-width: 100%;
+    transform: none;
+  }
+
+  .bites-drawer:focus-visible {
+    outline: none;
+  }
+
+  .bites-item {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100%;
+    transform: none !important;
+    pointer-events: auto !important;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .bites-item-media {
+    position: static;
+    width: 100% !important;
+    height: auto !important;
+    object-fit: contain;
+  }
+
+  .bites-caption {
+    position: static;
+    order: 1;
+    opacity: 1;
+    transform: none;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    white-space: normal;
+    pointer-events: auto;
+    font-size: 11px;
   }
 
   /* About — stack contact options */
