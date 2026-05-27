@@ -1,5 +1,6 @@
 import {
   caseStudies,
+  isCaseStudyNavigable,
   workIndex,
   aiWorkIndex,
   productWorkIndex,
@@ -8,6 +9,8 @@ import {
   type CaseStudyGalleryVideo,
 } from '../data/projects';
 import { renderWorkSection } from './landing';
+import { renderStudiesArticle } from './studies-article';
+import { renderStudiesGrid } from './studies-grid';
 import { Rive, Layout, Fit, Alignment } from '@rive-app/webgl2';
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -26,6 +29,77 @@ const isVideo = (item: CaseStudyGalleryItem): item is CaseStudyGalleryVideo =>
 const isRive = (item: CaseStudyGalleryItem): item is CaseStudyGalleryRive =>
   'riveSrc' in item;
 
+function appendMobileChrome(
+  prevSlug: string | null,
+  nextSlug: string | null,
+): () => void {
+  const bottomBar = el('div', 'csm-bottom-bar');
+  const nav = el('div', 'csm-nav');
+  const prevBtn = el('button', `csm-nav-btn${prevSlug ? '' : ' csm-nav-btn--disabled'}`) as HTMLButtonElement;
+  prevBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  prevBtn.setAttribute('aria-label', 'Previous project');
+  if (!prevSlug) prevBtn.disabled = true;
+
+  const nextBtn = el('button', `csm-nav-btn${nextSlug ? '' : ' csm-nav-btn--disabled'}`) as HTMLButtonElement;
+  nextBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  nextBtn.setAttribute('aria-label', 'Next project');
+  if (!nextSlug) nextBtn.disabled = true;
+  nav.append(prevBtn, nextBtn);
+
+  const menuBtn = el('button', 'csm-menu-btn', 'Menu');
+  menuBtn.type = 'button';
+  bottomBar.append(nav, menuBtn);
+  document.body.appendChild(bottomBar);
+
+  prevBtn.addEventListener('click', () => {
+    if (prevSlug) location.hash = `#/work/${prevSlug}`;
+  });
+  nextBtn.addEventListener('click', () => {
+    if (nextSlug) location.hash = `#/work/${nextSlug}`;
+  });
+
+  const overlay = el('div', 'csm-menu-overlay');
+  const menuContent = el('div', 'csm-menu-content');
+  const studiesSection = el('div', 'csm-menu-studies');
+  studiesSection.appendChild(el('p', 'landing-section-label', 'Studies'));
+  studiesSection.appendChild(renderStudiesGrid(aiWorkIndex));
+  menuContent.append(studiesSection, renderWorkSection('Work', productWorkIndex, true));
+  overlay.appendChild(menuContent);
+  document.body.appendChild(overlay);
+
+  menuContent.addEventListener('click', (e) => {
+    const link =
+      (e.target as HTMLElement).closest('a.work-title-link')
+      ?? (e.target as HTMLElement).closest('a.studies-card--link');
+    if (!link) return;
+    e.preventDefault();
+    const href = link.getAttribute('href');
+    if (href) location.hash = href;
+  });
+
+  let menuOpen = false;
+  const openMenu = () => {
+    menuOpen = true;
+    overlay.classList.add('csm-menu-overlay--open');
+    menuBtn.textContent = 'Close';
+  };
+  const closeMenu = () => {
+    menuOpen = false;
+    overlay.style.transform = '';
+    overlay.classList.remove('csm-menu-overlay--open');
+    menuBtn.textContent = 'Menu';
+  };
+  menuBtn.addEventListener('click', () => {
+    if (menuOpen) closeMenu();
+    else openMenu();
+  });
+
+  return () => {
+    bottomBar.remove();
+    overlay.remove();
+  };
+}
+
 export function renderDetailMobile(container: HTMLElement, slug: string) {
   const study = caseStudies[slug];
   container.innerHTML = '';
@@ -39,13 +113,21 @@ export function renderDetailMobile(container: HTMLElement, slug: string) {
     return;
   }
 
-  // ── Slug navigation ──────────────────────────────────────────
   const slugs = workIndex
-    .filter(row => row.slug && caseStudies[row.slug]?.gallery?.length)
+    .filter(row => row.slug && isCaseStudyNavigable(row.slug))
     .map(row => row.slug!);
   const currentIdx = slugs.indexOf(slug);
   const prevSlug = currentIdx > 0 ? slugs[currentIdx - 1] : null;
   const nextSlug = currentIdx < slugs.length - 1 ? slugs[currentIdx + 1] : null;
+
+  if (study.detailLayout === 'article') {
+    container.className = 'csm-root csm-root--article';
+    renderStudiesArticle(container, slug, { embedded: true });
+    container.appendChild(el('div', 'csm-scroll-pad'));
+    const removeChrome = appendMobileChrome(prevSlug, nextSlug);
+    window.addEventListener('hashchange', removeChrome, { once: true });
+    return;
+  }
 
   // ── Static info block (sits behind images) ─────────────────
   const infoBlock = el('div', 'csm-info');
@@ -181,14 +263,18 @@ export function renderDetailMobile(container: HTMLElement, slug: string) {
   // ── Menu overlay ─────────────────────────────────────────────
   const overlay = el('div', 'csm-menu-overlay');
   const menuContent = el('div', 'csm-menu-content');
-  menuContent.appendChild(renderWorkSection('AI Stuffs', aiWorkIndex, false));
-  menuContent.appendChild(renderWorkSection('Design', productWorkIndex, true));
+  const studiesSection = el('div', 'csm-menu-studies');
+  studiesSection.appendChild(el('p', 'landing-section-label', 'Studies'));
+  studiesSection.appendChild(renderStudiesGrid(aiWorkIndex));
+  menuContent.append(studiesSection, renderWorkSection('Work', productWorkIndex, true));
   overlay.appendChild(menuContent);
 
   document.body.appendChild(overlay);
 
   menuContent.addEventListener('click', (e) => {
-    const link = (e.target as HTMLElement).closest('a.work-title-link');
+    const link =
+      (e.target as HTMLElement).closest('a.work-title-link')
+      ?? (e.target as HTMLElement).closest('a.studies-card--link');
     if (!link) return;
     e.preventDefault();
     const href = link.getAttribute('href');

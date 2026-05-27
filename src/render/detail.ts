@@ -1,11 +1,13 @@
 import {
   caseStudies,
+  isCaseStudyNavigable,
   workIndex,
   type CaseStudyGalleryItem,
   type CaseStudyGalleryCanvas,
   type CaseStudyGalleryRive,
   type CaseStudyGalleryVideo,
 } from '../data/projects';
+import { renderStudiesArticle } from './studies-article';
 import { Rive, Layout, Fit, Alignment } from '@rive-app/webgl2';
 
 const IMAGE_HEIGHT_STEP = 40;
@@ -57,6 +59,11 @@ export function renderDetail(container: HTMLElement, slug: string) {
       (() => { const a = el('a', 'text-link', 'Back home'); a.href = '#/'; return a; })(),
     );
     container.appendChild(wrap);
+    return;
+  }
+
+  if (study.detailLayout === 'article') {
+    renderStudiesArticle(container, slug);
     return;
   }
 
@@ -435,7 +442,7 @@ export function renderDetail(container: HTMLElement, slug: string) {
   // ── Project swipe navigation ─────────────────────────────────
   // Use workIndex order so swipe direction matches the landing page list
   const slugs = workIndex
-    .filter(row => row.slug && caseStudies[row.slug]?.gallery?.length)
+    .filter(row => row.slug && isCaseStudyNavigable(row.slug))
     .map(row => row.slug!);
   const currentIdx = slugs.indexOf(slug);
   const prevSlug = currentIdx > 0 ? slugs[currentIdx - 1] : null;

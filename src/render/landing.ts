@@ -1,29 +1,15 @@
 import { site } from '../data/site';
-import { caseStudies, productWorkIndex, type WorkIndexRow } from '../data/projects';
+import {
+  caseStudies,
+  aiWorkIndex,
+  productWorkIndex,
+  type ArticleSection,
+  type WorkIndexRow,
+} from '../data/projects';
 import { initNameReveal } from '../rive/name-reveal';
+import { renderStudiesGrid } from './studies-grid';
+import { renderBitesDrawer } from './bites-drawer';
 
-function smoothScrollTo(targetY: number, duration: number, onNearEnd?: () => void): Promise<void> {
-  return new Promise(resolve => {
-    const startY = window.scrollY;
-    const distance = targetY - startY;
-    const startTime = performance.now();
-    const ease = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    let nearEndFired = false;
-    function step(now: number) {
-      const progress = Math.min((now - startTime) / duration, 1);
-      window.scrollTo(0, startY + distance * ease(progress));
-      // At 85% of the time budget the scroll is ~99% visually complete —
-      // fire early so the image rise overlaps with the imperceptible tail.
-      if (!nearEndFired && progress >= 0.55 && onNearEnd) {
-        nearEndFired = true;
-        onNearEnd();
-      }
-      if (progress < 1) requestAnimationFrame(step);
-      else resolve();
-    }
-    requestAnimationFrame(step);
-  });
-}
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -92,13 +78,31 @@ function preloadAsset(url: string): Promise<void> {
   return promise;
 }
 
+function collectArticleAssetUrls(sections: ArticleSection[]): string[] {
+  const urls: string[] = [];
+  for (const s of sections) {
+    if (s.kind === 'figure') urls.push(s.src);
+    else if (s.kind === 'video') urls.push(s.src);
+    else if (s.kind === 'feature') urls.push(s.figure.src);
+    else if (s.kind === 'twoFigures') {
+      urls.push(s.left.src, s.right.src);
+    }
+  }
+  return urls;
+}
+
 function preloadCaseStudyAssets(slug: string): Promise<void> {
   const study = caseStudies[slug];
   if (!study) return Promise.resolve();
-  // Warm the first two assets so the first transition stays smooth
-  // even on slower connections.
-  const urls = study.gallery.slice(0, 2).map(getCaseStudyAssetUrl);
-  return Promise.all(urls.map(preloadAsset)).then(() => undefined);
+  const urls =
+    study.detailLayout === 'article' && study.article?.length
+      ? collectArticleAssetUrls(study.article).slice(0, 2)
+      : study.gallery.slice(0, 2).map(getCaseStudyAssetUrl);
+  return Promise.all(urls.filter(Boolean).map(preloadAsset)).then(() => undefined);
+}
+
+function navigateToCaseStudy(slug: string): void {
+  location.hash = `#/work/${slug}`;
 }
 
 export function renderWorkRow(row: WorkIndexRow, showYear: boolean): HTMLElement {
@@ -135,9 +139,7 @@ export function renderWorkRow(row: WorkIndexRow, showYear: boolean): HTMLElement
       e.preventDefault();
       const slug = row.slug!;
       warmCaseStudy();
-      smoothScrollTo(document.documentElement.scrollHeight, 900, () => {
-        location.hash = `#/work/${slug}`;
-      });
+      navigateToCaseStudy(slug);
     });
     a.textContent = row.title;
     titleLine.appendChild(a);
@@ -153,12 +155,14 @@ export function renderWorkRow(row: WorkIndexRow, showYear: boolean): HTMLElement
 }
 
 export function renderWorkSection(
-  label: string,
+  label: string | undefined,
   rows: WorkIndexRow[],
   showYear: boolean,
 ): HTMLElement {
   const section = el('div', 'landing-section');
-  section.appendChild(el('p', 'landing-section-label', label));
+  if (label) {
+    section.appendChild(el('p', 'landing-section-label', label));
+  }
 
   const table = el('div', 'work-table');
   for (let i = 0; i < rows.length; i++) {
@@ -194,20 +198,9 @@ function renderAboutPanel(): HTMLElement {
   };
 
   for (const p of site.aboutBio.paragraphs) {
-    if (p === null) {
-      const { before, italic, after } = site.aboutBio.aiParagraph;
-      const para = el('p', 'about-bio-p');
-      para.appendChild(document.createTextNode(before));
-      const em = document.createElement('em');
-      em.textContent = italic;
-      para.appendChild(em);
-      para.appendChild(document.createTextNode(after));
-      bio.appendChild(para);
-    } else {
-      const para = el('p', 'about-bio-p');
-      appendWithInlineEmphasis(para, p);
-      bio.appendChild(para);
-    }
+    const para = el('p', 'about-bio-p');
+    appendWithInlineEmphasis(para, p);
+    bio.appendChild(para);
   }
 
   const contact = el('div', 'landing-about-contact');
@@ -217,23 +210,6 @@ function renderAboutPanel(): HTMLElement {
   emailLink.className = 'about-contact-email';
   emailLink.textContent = site.email;
   contact.appendChild(emailLink);
-
-  const xLink = document.createElement('a');
-  xLink.href = site.xUrl;
-  xLink.target = '_blank';
-  xLink.rel = 'noopener noreferrer';
-  xLink.className = 'about-contact-x';
-  const xIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  xIcon.setAttribute('viewBox', '0 0 24 24');
-  xIcon.setAttribute('width', '24');
-  xIcon.setAttribute('height', '24');
-  xIcon.setAttribute('aria-hidden', 'true');
-  xIcon.setAttribute('class', 'about-x-icon');
-  xIcon.innerHTML =
-    '<path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622 5.912-5.622Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>';
-  const xHandle = el('span', 'about-x-handle', site.xHandle);
-  xLink.append(xIcon, xHandle);
-  contact.appendChild(xLink);
 
   panel.append(bio, contact);
   return panel;
@@ -261,12 +237,12 @@ export function renderLanding(container: HTMLElement) {
   const assetsBase = `${import.meta.env.BASE_URL}assets`;
 
   const photo = document.createElement('img');
-  photo.src = `${assetsBase}/profile.png`;
+  photo.src = encodeURI(`${assetsBase}/Profile Image.png`);
   photo.alt = site.name;
   photo.className = 'landing-hero-photo';
 
   const photoDark = document.createElement('img');
-  photoDark.src = `${assetsBase}/profile-dark.png`;
+  photoDark.src = `${assetsBase}/profile.png`;
   photoDark.alt = site.name;
   photoDark.className = 'landing-hero-photo landing-hero-photo--dark';
 
@@ -286,9 +262,123 @@ export function renderLanding(container: HTMLElement) {
   hero.append(photoWrap, heroText);
   inner.appendChild(hero);
 
-  // Work sections
-  const workWrap = el('div', 'landing-work');
-  workWrap.appendChild(renderWorkSection('Work', productWorkIndex, true));
+  // Work — Bites / Work / Long Form tabs (Figma 289:67)
+  const workWrap = el('div', 'landing-work landing-work-anchor landing-work--bites-active');
+
+  const tablist = el('div', 'landing-work-tablist');
+  tablist.setAttribute('role', 'tablist');
+  tablist.setAttribute('aria-label', 'Bites, Work and Studies');
+
+  const shell = el('div', 'landing-work-tab-shell');
+
+  type TabKey = 'bites' | 'work' | 'studies';
+  const TAB_DEFS: { key: TabKey; label: string; desc: string }[] = [
+    { key: 'bites',   label: 'Bites',   desc: 'Little snapshots.' },
+    { key: 'work',    label: 'Work',    desc: 'Recent projects, examined.' },
+    { key: 'studies', label: 'Long Form', desc: 'My heart, on my sleeve.' },
+  ];
+  const TAB_KEYS = TAB_DEFS.map(t => t.key);
+  const DEFAULT_TAB: TabKey = 'bites';
+
+  const tabBtns = new Map<TabKey, HTMLButtonElement>();
+  for (const { key, label, desc } of TAB_DEFS) {
+    const btn = el('button', `landing-work-tab${key === DEFAULT_TAB ? ' landing-work-tab--active' : ''}`);
+    btn.type = 'button';
+    btn.id = `tab-${key}`;
+    btn.setAttribute('role', 'tab');
+    btn.setAttribute('aria-selected', String(key === DEFAULT_TAB));
+    btn.setAttribute('aria-controls', `work-panel-${key}`);
+    btn.setAttribute('tabindex', key === DEFAULT_TAB ? '0' : '-1');
+    btn.appendChild(el('span', 'landing-work-tab-label', label));
+    btn.appendChild(el('span', 'landing-work-tab-desc', desc));
+    tabBtns.set(key, btn as HTMLButtonElement);
+    shell.appendChild(btn);
+  }
+  tablist.appendChild(shell);
+
+  const panelsWrap = el('div', 'landing-work-panels');
+
+  const panelBites = el('div', 'landing-work-panel');
+  panelBites.id = 'work-panel-bites';
+  panelBites.setAttribute('role', 'tabpanel');
+  panelBites.setAttribute('aria-labelledby', 'tab-bites');
+  panelBites.setAttribute('aria-hidden', 'false');
+  panelBites.appendChild(renderBitesDrawer());
+
+  const panelWork = el('div', 'landing-work-panel landing-work-panel--hidden');
+  panelWork.id = 'work-panel-work';
+  panelWork.setAttribute('role', 'tabpanel');
+  panelWork.setAttribute('aria-labelledby', 'tab-work');
+  panelWork.setAttribute('aria-hidden', 'true');
+  panelWork.appendChild(renderWorkSection(undefined, productWorkIndex, true));
+
+  const panelStudies = el('div', 'landing-work-panel landing-work-panel--hidden');
+  panelStudies.id = 'work-panel-studies';
+  panelStudies.setAttribute('role', 'tabpanel');
+  panelStudies.setAttribute('aria-labelledby', 'tab-studies');
+  panelStudies.setAttribute('aria-hidden', 'true');
+  panelStudies.appendChild(
+    renderStudiesGrid(aiWorkIndex, {
+      onWarm: preloadCaseStudyAssets,
+      onNavigate: navigateToCaseStudy,
+    }),
+  );
+
+  const panelMap = new Map<TabKey, HTMLElement>([
+    ['bites',   panelBites],
+    ['work',    panelWork],
+    ['studies', panelStudies],
+  ]);
+
+  panelsWrap.append(panelBites, panelWork, panelStudies);
+  workWrap.append(tablist, panelsWrap);
+
+  let activeTabKey: TabKey = DEFAULT_TAB;
+  const activateTab = (key: TabKey) => {
+    // If a case study is currently open, close it without triggering a
+    // browser scroll-to-top (which location.hash = '' would cause).
+    if (location.hash && /work\/.+/.test(location.hash)) {
+      window.dispatchEvent(new CustomEvent('close-study'));
+    }
+    if (key === activeTabKey) return;
+    const isLTR = TAB_KEYS.indexOf(key) > TAB_KEYS.indexOf(activeTabKey);
+    shell.dataset.direction = isLTR ? 'ltr' : 'rtl';
+    activeTabKey = key;
+    workWrap.classList.toggle('landing-work--bites-active', key === 'bites');
+    workWrap.classList.toggle('landing-work--studies-active', key === 'studies');
+    for (const [k, panel] of panelMap) {
+      const on = k === key;
+      panel.classList.toggle('landing-work-panel--hidden', !on);
+      panel.setAttribute('aria-hidden', String(!on));
+    }
+    for (const [k, btn] of tabBtns) {
+      const on = k === key;
+      btn.classList.toggle('landing-work-tab--active', on);
+      btn.setAttribute('aria-selected', String(on));
+      btn.setAttribute('tabindex', on ? '0' : '-1');
+    }
+  };
+
+  for (const [key, btn] of tabBtns) {
+    btn.addEventListener('click', () => activateTab(key));
+  }
+
+  // Arrow-key navigation (ARIA tabs pattern)
+  shell.addEventListener('keydown', (e) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+    e.preventDefault();
+    const keys = TAB_KEYS;
+    const idx = keys.indexOf(activeTabKey);
+    let next = idx;
+    if (e.key === 'ArrowRight') next = (idx + 1) % keys.length;
+    else if (e.key === 'ArrowLeft') next = (idx - 1 + keys.length) % keys.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = keys.length - 1;
+    const nextKey = keys[next];
+    activateTab(nextKey);
+    tabBtns.get(nextKey)?.focus();
+  });
+
   inner.appendChild(workWrap);
 
   // About panel
@@ -309,9 +399,11 @@ export function renderLanding(container: HTMLElement) {
   nameCanvas.addEventListener('click', handleNameClick);
   nameText.addEventListener('click', handleNameClick);
 
-  // Toggle
-  moreBtn.addEventListener('click', () => {
-    const isAbout = container.classList.toggle('is-about');
+  // Apply about state visually (driven by the URL via the about-change event)
+  const applyAbout = (isAbout: boolean) => {
+    const currentlyAbout = container.classList.contains('is-about');
+    if (currentlyAbout === isAbout) return;
+    container.classList.toggle('is-about', isAbout);
     nameReveal.setDark(isAbout);
     moreBtn.setAttribute('aria-expanded', String(isAbout));
     moreBtn.textContent = isAbout ? 'LESS' : 'MORE';
@@ -320,6 +412,28 @@ export function renderLanding(container: HTMLElement) {
     if (!isAbout) {
       moreBtn.classList.add('no-hover');
       setTimeout(() => moreBtn.classList.remove('no-hover'), 2000);
+    }
+  };
+
+  window.addEventListener('about-change', (e) => {
+    const isAbout = (e as CustomEvent<{ isAbout: boolean }>).detail.isAbout;
+    applyAbout(isAbout);
+  });
+
+  // Sync to current URL on initial mount
+  if (location.hash.replace(/^#\/?/, '').trim() === 'about') {
+    applyAbout(true);
+  }
+
+  moreBtn.addEventListener('click', () => {
+    const isOpening = !container.classList.contains('is-about');
+    if (isOpening) {
+      location.hash = '#/about';
+    } else {
+      // Closing — clear hash without leaving '#' debris in the URL.
+      // We're at the top of the page so no scroll jump to worry about.
+      history.pushState(null, '', location.pathname + location.search);
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
     }
   });
 }
