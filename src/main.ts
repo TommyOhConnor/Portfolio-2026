@@ -132,7 +132,7 @@ function render() {
     });
 
     const study = caseStudies[route.slug];
-    setArticleDetailUi(study?.detailLayout === 'article');
+    setArticleDetailUi(true);
     document.title = study
       ? `${study.headline} — Tommy O'Connor`
       : "Project — Tommy O'Connor";

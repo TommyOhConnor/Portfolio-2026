@@ -247,7 +247,7 @@ body {
   z-index: 15;
 }
 
-/* Long Form article overlay — tabs sit above z-index 10 detail; hide while reading */
+/* Work / Long Form detail overlay — tabs sit above z-index 10; hide while reading */
 .is-article-detail .landing-work-tablist {
   visibility: hidden;
   pointer-events: none;
@@ -493,10 +493,12 @@ body {
   gap: 16px;
 }
 
+/* Every work index row — min gap between title block and category */
 .work-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  gap: 16px;
   position: relative;
 }
 
@@ -1213,6 +1215,10 @@ body {
 
 .csm-menu-content .work-row-main {
   gap: 0;
+}
+
+.csm-menu-content .work-row {
+  gap: 16px;
 }
 
 .csm-menu-studies {

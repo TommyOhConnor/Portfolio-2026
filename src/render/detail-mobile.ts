@@ -2,7 +2,6 @@ import {
   caseStudies,
   isCaseStudyNavigable,
   workIndex,
-  aiWorkIndex,
   productWorkIndex,
   type CaseStudyGalleryItem,
   type CaseStudyGalleryRive,
@@ -10,7 +9,6 @@ import {
 } from '../data/projects';
 import { renderWorkSection } from './landing';
 import { renderStudiesArticle } from './studies-article';
-import { renderStudiesGrid } from './studies-grid';
 import { Rive, Layout, Fit, Alignment } from '@rive-app/webgl2';
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -60,17 +58,12 @@ function appendMobileChrome(
 
   const overlay = el('div', 'csm-menu-overlay');
   const menuContent = el('div', 'csm-menu-content');
-  const studiesSection = el('div', 'csm-menu-studies');
-  studiesSection.appendChild(el('p', 'landing-section-label', 'Studies'));
-  studiesSection.appendChild(renderStudiesGrid(aiWorkIndex));
-  menuContent.append(studiesSection, renderWorkSection('Work', productWorkIndex, true));
+  menuContent.appendChild(renderWorkSection('Work', productWorkIndex, true));
   overlay.appendChild(menuContent);
   document.body.appendChild(overlay);
 
   menuContent.addEventListener('click', (e) => {
-    const link =
-      (e.target as HTMLElement).closest('a.work-title-link')
-      ?? (e.target as HTMLElement).closest('a.studies-card--link');
+    const link = (e.target as HTMLElement).closest('a.work-title-link');
     if (!link) return;
     e.preventDefault();
     const href = link.getAttribute('href');
@@ -227,9 +220,6 @@ export function renderDetailMobile(container: HTMLElement, slug: string) {
 
   container.appendChild(images);
 
-  // Spacer so content isn't hidden behind fixed bottom bar
-  container.appendChild(el('div', 'csm-scroll-pad'));
-
   // ── Bottom bar ───────────────────────────────────────────────
   const bottomBar = el('div', 'csm-bottom-bar');
 
@@ -263,18 +253,13 @@ export function renderDetailMobile(container: HTMLElement, slug: string) {
   // ── Menu overlay ─────────────────────────────────────────────
   const overlay = el('div', 'csm-menu-overlay');
   const menuContent = el('div', 'csm-menu-content');
-  const studiesSection = el('div', 'csm-menu-studies');
-  studiesSection.appendChild(el('p', 'landing-section-label', 'Studies'));
-  studiesSection.appendChild(renderStudiesGrid(aiWorkIndex));
-  menuContent.append(studiesSection, renderWorkSection('Work', productWorkIndex, true));
+  menuContent.appendChild(renderWorkSection('Work', productWorkIndex, true));
   overlay.appendChild(menuContent);
 
   document.body.appendChild(overlay);
 
   menuContent.addEventListener('click', (e) => {
-    const link =
-      (e.target as HTMLElement).closest('a.work-title-link')
-      ?? (e.target as HTMLElement).closest('a.studies-card--link');
+    const link = (e.target as HTMLElement).closest('a.work-title-link');
     if (!link) return;
     e.preventDefault();
     const href = link.getAttribute('href');
