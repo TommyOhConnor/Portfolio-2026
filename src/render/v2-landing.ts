@@ -3,9 +3,10 @@ import {
   v2Site,
   v2WorkProjects,
   type V2MediaTile,
-  type V2WorkFilter,
   type V2WorkProject,
 } from '../data/v2-content';
+import { installV2Cursor } from './v2-cursor';
+import { openV2Sheet } from './v2-sheet';
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -27,7 +28,7 @@ function scrollToSection(id: string): void {
 function buildPlayBadge(): HTMLElement {
   const badge = el('div', 'v2-play-badge');
   badge.innerHTML =
-    '<span class="v2-play-icon" aria-hidden="true"></span><span class="v2-play-label">Play</span>';
+    `<img class="v2-play-icon" src="${import.meta.env.BASE_URL}assets/v2/play.svg" width="10" height="10" alt="" aria-hidden="true" /><span class="v2-play-label">Play</span>`;
   return badge;
 }
 
@@ -126,12 +127,27 @@ function enableDragScroll(row: HTMLElement): void {
   row.addEventListener('dragstart', (e) => e.preventDefault());
 }
 
+/** Gallery thumbnails render at 60% of the design heights in the data */
+const TILE_SCALE = 0.6;
+
 function tileWidth(tile: V2MediaTile): number {
-  return Math.round((tile.height * tile.mediaWidth) / tile.mediaHeight);
+  return Math.round((tile.height * TILE_SCALE * tile.mediaWidth) / tile.mediaHeight);
 }
 
-function buildMediaTile(tile: V2MediaTile): HTMLElement {
-  const wrap = el('div', 'v2-tile');
+function buildMediaTile(tile: V2MediaTile, onOpen: () => void): HTMLElement {
+  const wrap = el('button', 'v2-tile');
+  wrap.type = 'button';
+  wrap.setAttribute('aria-label', tile.alt ? `Open ${tile.alt}` : 'Open image');
+  wrap.addEventListener('click', (e) => {
+    // detail is 0 for keyboard activation. After a pointer open, focus returns here when the
+    // lightbox closes; flag it so that restored focus doesn't draw the keyboard focus ring.
+    if (e.detail > 0) wrap.dataset.pointerOpened = '';
+    onOpen();
+  });
+  wrap.addEventListener('blur', () => {
+    // Opening the lightbox also blurs the tile; only a real move elsewhere clears the flag
+    if (!document.querySelector('dialog[open]')) delete wrap.dataset.pointerOpened;
+  });
   wrap.style.setProperty('--v2-tile-w', `${tileWidth(tile)}px`);
   wrap.style.aspectRatio = `${tile.mediaWidth} / ${tile.mediaHeight}`;
 
@@ -146,14 +162,6 @@ function buildMediaTile(tile: V2MediaTile): HTMLElement {
     wrap.appendChild(video);
     if (tile.play) {
       wrap.appendChild(buildPlayBadge());
-      wrap.classList.add('v2-tile--has-play');
-      wrap.addEventListener('click', () => {
-        if (video.paused) {
-          video.play().catch(() => undefined);
-        } else {
-          video.pause();
-        }
-      });
     }
   } else if (tile.src) {
     const img = document.createElement('img');
@@ -164,7 +172,6 @@ function buildMediaTile(tile: V2MediaTile): HTMLElement {
     wrap.appendChild(img);
     if (tile.play) {
       wrap.appendChild(buildPlayBadge());
-      wrap.classList.add('v2-tile--has-play');
     }
   }
 
@@ -173,7 +180,6 @@ function buildMediaTile(tile: V2MediaTile): HTMLElement {
 
 function buildProjectBlock(project: V2WorkProject): HTMLElement {
   const block = el('article', 'v2-project');
-  block.dataset.filter = project.filter;
   block.id = `project-${project.id}`;
 
   const intro = el('div', 'v2-project-intro');
@@ -184,30 +190,31 @@ function buildProjectBlock(project: V2WorkProject): HTMLElement {
     }`,
     project.title,
   );
-  const desc = el('p', 'v2-project-desc', project.description);
-  intro.append(title, desc);
+  if (project.client) title.appendChild(el('span', 'v2-project-client', project.client));
+  const heading = el('div', 'v2-project-heading');
+  heading.appendChild(title);
+  if (project.tag) heading.appendChild(el('span', 'v2-project-tag', project.tag));
+  const desc = el(
+    'p',
+    `v2-project-desc${project.titleFont === 'geist-medium' ? ' v2-project-desc--geist' : ''}`,
+    project.description,
+  );
+  intro.append(heading, desc);
   block.appendChild(intro);
 
   const row = el('div', 'v2-tile-row');
   row.setAttribute('tabindex', '0');
   row.setAttribute('aria-label', `${project.title} gallery`);
   enableDragScroll(row);
-  project.tiles.forEach((tile, index) => {
-    if (index === 0 && project.firstTileCaption) {
-      const col = el('div', 'v2-tile-col');
-      col.style.setProperty('--v2-tile-w', `${tileWidth(tile)}px`);
-      col.appendChild(buildMediaTile(tile));
-      col.appendChild(el('p', 'v2-tile-caption', project.firstTileCaption));
-      row.appendChild(col);
-    } else {
-      row.appendChild(buildMediaTile(tile));
-    }
-  });
+  for (const tile of project.tiles) {
+    row.appendChild(buildMediaTile(tile, () => openV2Sheet(project)));
+  }
   block.appendChild(row);
   return block;
 }
 
 export function renderV2Landing(container: HTMLElement): void {
+  installV2Cursor();
   container.innerHTML = '';
   container.className = 'view view-v2';
   container.dataset.theme = 'product';
@@ -244,54 +251,13 @@ export function renderV2Landing(container: HTMLElement): void {
 
   const workHead = el('div', 'v2-section-head');
   workHead.appendChild(el('h2', 'v2-section-title', 'Work'));
-
-  const filterBar = el('div', 'v2-filter-bar');
-  filterBar.appendChild(el('span', 'v2-filter-label', v2Site.workFilterLabel));
-
-  const pills = el('div', 'v2-filter-pills');
-  let activeFilter: V2WorkFilter = 'product';
-  const pillBtns = new Map<V2WorkFilter, HTMLButtonElement>();
-
-  for (const key of ['product', 'brand'] as const) {
-    const btn = el('button', `v2-filter-pill${key === activeFilter ? ' v2-filter-pill--active' : ''}`, key);
-    btn.type = 'button';
-    btn.dataset.filter = key;
-    pillBtns.set(key, btn as HTMLButtonElement);
-    pills.appendChild(btn);
-  }
-  filterBar.appendChild(pills);
-  workHead.appendChild(filterBar);
   workSection.appendChild(workHead);
 
   const projectList = el('div', 'v2-project-list');
-  const projectNodes = v2WorkProjects.map((p) => buildProjectBlock(p));
-  for (const node of projectNodes) {
-    projectList.appendChild(node);
+  for (const project of v2WorkProjects) {
+    if (!project.hidden) projectList.appendChild(buildProjectBlock(project));
   }
   workSection.appendChild(projectList);
-
-  const applyFilter = (filter: V2WorkFilter) => {
-    activeFilter = filter;
-    const theme = filter === 'brand' ? 'brand' : 'product';
-    container.dataset.theme = theme;
-    document.body.dataset.v2Theme = theme;
-    const themeMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-    if (themeMeta) {
-      themeMeta.content = theme === 'brand' ? '#d9d9d9' : '#272727';
-    }
-    for (const [key, btn] of pillBtns) {
-      btn.classList.toggle('v2-filter-pill--active', key === filter);
-    }
-    for (const node of projectNodes) {
-      const show = node.dataset.filter === filter;
-      node.classList.toggle('v2-project--hidden', !show);
-    }
-  };
-
-  for (const [key, btn] of pillBtns) {
-    btn.addEventListener('click', () => applyFilter(key));
-  }
-  applyFilter(activeFilter);
 
   main.appendChild(workSection);
 
@@ -299,27 +265,29 @@ export function renderV2Landing(container: HTMLElement): void {
   aboutSection.id = 'about';
   const aboutCopy = el('div', 'v2-about-copy');
   aboutCopy.appendChild(el('h2', 'v2-section-title', 'About me'));
+  const aboutBody = el('div', 'v2-about-body');
   for (const paragraph of v2Site.aboutParagraphs) {
-    aboutCopy.appendChild(el('p', 'v2-about-p', paragraph));
+    aboutBody.appendChild(el('p', 'v2-about-p', paragraph));
   }
+  aboutCopy.appendChild(aboutBody);
   aboutSection.appendChild(aboutCopy);
   main.appendChild(aboutSection);
 
   const contactSection = el('section', 'v2-section v2-section--contact');
   contactSection.id = 'contact';
-  contactSection.appendChild(el('h2', 'v2-section-title v2-section-title--contact', 'Contact'));
+  contactSection.appendChild(el('h2', 'v2-section-title', 'Contact'));
   const contactLinks = el('div', 'v2-contact-links');
   const email = document.createElement('a');
   email.href = `mailto:${v2Site.contactEmail}`;
   email.className = 'v2-contact-link';
   email.textContent = v2Site.contactEmail;
-  const twitter = document.createElement('a');
-  twitter.href = v2Site.twitterUrl;
-  twitter.className = 'v2-contact-link';
-  twitter.target = '_blank';
-  twitter.rel = 'noopener noreferrer';
-  twitter.textContent = v2Site.twitterLabel;
-  contactLinks.append(email, twitter);
+  const linkedin = document.createElement('a');
+  linkedin.href = v2Site.linkedinUrl;
+  linkedin.className = 'v2-contact-link';
+  linkedin.target = '_blank';
+  linkedin.rel = 'noopener noreferrer';
+  linkedin.textContent = v2Site.linkedinLabel;
+  contactLinks.append(email, linkedin);
   contactSection.appendChild(contactLinks);
   main.appendChild(contactSection);
 
